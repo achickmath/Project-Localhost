@@ -24,13 +24,14 @@ router.post("/", async (req, res) => {
   
         res.json({
           success: true,
-          token: "dummy_token", // This should be replaced with a real JWT if used
-          userId: user.UserLoginid,
+          token: "dummy_token",
+          userLoginId: user.UserLoginid,  // ✅ Correct key name
           user: {
-            firstName: user.firstName,
-            lastName: user.lastName
+              firstName: user.firstName,
+              lastName: user.lastName
           }
-        });
+      });
+      
       } else {
         res.status(401).json({ success: false, message: "Invalid credentials" });
       }
