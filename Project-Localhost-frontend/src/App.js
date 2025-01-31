@@ -5,6 +5,7 @@ import Profile from "./pages/Profile";
 import Signup from "./pages/Signup";
 import Writeup from './pages/Writeup';
 import WriteupZone from './pages/WriteupZone';
+import FullWriteup from './pages/FullWriteup';
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem("authToken");
@@ -27,6 +28,7 @@ function App() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path = "/Writeup" element = {<Writeup />} />
         <Route path = "/WriteupZone" element = {<WriteupZone/>} />
+        <Route path = "/writeup/:id" element = {<FullWriteup/>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
