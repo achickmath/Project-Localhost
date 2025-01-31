@@ -31,22 +31,42 @@ const NavBar = () => {
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState({ firstName: "", lastName: "" });
+  const [writeups, setWriteups] = useState([]);
+
+  
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedFirstName = localStorage.getItem("firstName");
     const storedLastName = localStorage.getItem("lastName");
+    const userLoginId = localStorage.getItem("userLoginId");
 
     if (!token) {
-      navigate("/login");
-      return;
+        navigate("/login");
+        return;
     }
 
     setUser({
-      firstName: storedFirstName || "User",
-      lastName: storedLastName || "",
+        firstName: storedFirstName || "User",
+        lastName: storedLastName || "",
     });
-  }, [navigate]);
+
+    // Fetch user writeups
+    const fetchWriteups = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/writeup/user/${userLoginId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                setWriteups(data.writeups);
+            }
+        } catch (error) {
+            console.error("Error fetching writeups:", error);
+        }
+    };
+
+    fetchWriteups();
+}, [navigate]);
 
   const projects = [
     {
@@ -61,20 +81,6 @@ export default function Profile() {
     }
   ];
 
-  const writeups = [
-    {
-      title: "Understanding Supply Chain Attacks",
-      date: "March 15, 2024",
-      image: "/api/placeholder/300/200",
-      summary: "An in-depth analysis of recent supply chain attacks and mitigation strategies"
-    },
-    {
-      title: "Zero Trust Architecture Implementation",
-      date: "February 28, 2024",
-      image: "/api/placeholder/300/200",
-      summary: "Step-by-step guide to implementing Zero Trust in modern organizations"
-    }
-  ];
 
   const certifications = [
     {
@@ -199,48 +205,49 @@ export default function Profile() {
                 ))}
               </div>
             </div>
-
+            
             {/* Writeups Section */}
-            <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">Recent Writeups</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {writeups.map((writeup, index) => (
-                  <div key={index} className="group cursor-pointer">
-                    <div className="relative overflow-hidden rounded-lg">
-                      <img
-                        src={writeup.image}
-                        alt={writeup.title}
-                        className="w-full h-48 object-cover transform transition-transform group-hover:scale-105"
-                      />
-                    </div>
-                    <h4 className="text-lg font-semibold text-gray-800 mt-3 group-hover:text-blue-600">
-                      {writeup.title}
-                    </h4>
-                    <p className="text-sm text-gray-500">{writeup.date}</p>
-                    <p className="text-gray-600 mt-2">{writeup.summary}</p>
+            <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8 mt-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6">Writeups</h3>
+              {writeups.length === 0 ? (
+                <p className="text-gray-500">No writeups yet.</p>
+              ) : (
+                <div className="overflow-x-auto scrollbar-thin scrollbar-track-gray-200 scrollbar-thumb-gray-500">
+                  <div className="flex space-x-6 p-4">
+                    {writeups.map((writeup, index) => (
+                      <div key={index} className="min-w-[300px] max-w-[400px] bg-gray-200 rounded-lg p-4 shadow-lg">
+                        <h4 className="text-lg font-semibold text-gray-800">{writeup.Title || "Untitled"}</h4>
+                        <p className="text-sm text-gray-500">{new Date(writeup.Date).toDateString() || "Unknown Date"}</p>
+                        <p className="text-gray-600 mt-2">
+                          {writeup.Content ? writeup.Content.slice(0, 100) : "No content available"}...
+                        </p>
+                        <span className="text-blue-500 font-semibold">{writeup.Category || "Uncategorized"}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Activity Section */}
-            <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Recent Activity</h3>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <FileText className="h-6 w-6 text-blue-500 mr-4" />
-                  <p className="text-gray-600">Commented on "Securing Your Remote Workforce" discussion</p>
+          {/* Recent Activity Section */}
+          <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+            <div className="space-y-4">
+              {/* ✅ Dynamic Writeup Activity */}
+              {writeups.length > 0 && writeups.slice(0, 3).map((writeup, index) => (
+                <div key={index} className="flex items-center">
+                  <FileText className="h-6 w-6 text-blue-500 mr-4" /> {/* ✅ Same icon */}
+                  <p className="text-gray-600">
+                    Posted writeup on <span className="font-semibold">{writeup.Title}</span> -{" "}
+                    <span className="text-blue-600">
+                      {writeup.Category === "THM" ? "TryHackMe" : writeup.Category === "HTB" ? "HackTheBox" : writeup.Category}
+                    </span>
+                  </p>
                 </div>
-                <div className="flex items-center">
-                  <FileText className="h-6 w-6 text-blue-500 mr-4" />
-                  <p className="text-gray-600">Shared a new blog post: "Implementing Zero Trust in Enterprise Networks"</p>
-                </div>
-                <div className="flex items-center">
-                  <FileText className="h-6 w-6 text-blue-500 mr-4" />
-                  <p className="text-gray-600">Joined the "Cybersecurity Professionals" group</p>
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
+
               {/*Adding post */}
             <button
               onClick = {() => navigate('/Writeup')}

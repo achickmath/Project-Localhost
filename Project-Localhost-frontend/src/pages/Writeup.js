@@ -7,17 +7,37 @@ export default function Writeup() {
     const[content, setContent] = useState('');
     const navigate = useNavigate();
 
-const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({title, category, content});
-    const isSuccess = true;
-    if (isSuccess) {
-        alert("Your writeup was posted successfully!");
-        navigate('/WriteupZone');
-    } else {
-        alert("We cannot post your writeup");
-    }
-}
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+  
+      const userLoginId = localStorage.getItem("userLoginId");
+      console.log("🟢 Submitting writeup:", { title, category, content, userLoginId });
+  
+      try {
+          const response = await fetch("http://localhost:5000/writeup/add", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ title, category, content, userLoginId }),
+          });
+  
+          const data = await response.json();
+          console.log("📨 Server response:", data);
+  
+          if (data.success) {
+              alert("Your writeup was posted successfully!");
+              navigate("/WriteupZone");
+          } else {
+              alert("❌ Error: " + data.message);
+          }
+      } catch (error) {
+          console.error("❌ Fetch error:", error);
+          alert("Something went wrong. Please try again.");
+      }
+  };
+  
+  
 
 return (
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-100 to-blue-50 pt-20 px-10">
@@ -48,9 +68,8 @@ return (
               required
             >
               <option value="">Select Category</option>
-              <option value="Web Exploitation">Web Exploitation</option>
-              <option value="Reverse Engineering">Reverse Engineering</option>
-              <option value="Forensics">Forensics</option>
+              <option value="THM">THM</option>
+              <option value="HTB">HTB</option>
             </select>
           </div>
 
