@@ -4,36 +4,49 @@ import { FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 // ✅ Navigation Bar
-const NavBar = () => (
-  <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl shadow-sm z-50">
-    <div className="container mx-auto px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-blue-600">BackDoor</h1>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+const NavBar = () => {
+  const navigate = useNavigate(); // ✅ Define navigate inside NavBar
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl shadow-sm z-50">
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-blue-600">BlueJack</h1>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            </div>
+          </div>
+          <div className="flex items-center space-x-6">
+            <button className="p-2 hover:bg-gray-100 rounded-full">
+              <Home className="h-6 w-6 text-gray-600" />
+              Home
+            </button>
+            <button className="p-2 hover:bg-gray-100 rounded-full">
+              <Bell className="h-6 w-6 text-gray-600" />
+              Notifcations
+            </button>
+            <button
+              onClick={() => navigate("/CTFEvents")}
+              className="p-2 hover:bg-gray-100 rounded-full">
+              <Flag className="h-5 w-5 mr-2" />
+              CTF Events
+            </button>
+            <a href="/profile" className="p-2 hover:bg-gray-100 rounded-full">
+              <User className="h-6 w-6 text-gray-600" />
+              Profile
+            </a>
           </div>
         </div>
-        <div className="flex items-center space-x-6">
-          <button className="p-2 hover:bg-gray-100 rounded-full">
-            <Home className="h-6 w-6 text-gray-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-full">
-            <Bell className="h-6 w-6 text-gray-600" />
-          </button>
-          <a href="/profile" className="p-2 hover:bg-gray-100 rounded-full">
-            <User className="h-6 w-6 text-gray-600" />
-          </a>
-        </div>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 // ✅ Profile Card
 const ProfileCard = () => (
