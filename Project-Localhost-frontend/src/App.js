@@ -9,6 +9,8 @@ import WriteupZone from './pages/WriteupZone';
 import FullWriteup from './pages/FullWriteup';
 import LandingPage from './pages/LandingPage';
 import CTFEvents from './pages/CTFEvents';
+import OrganizationPage from './pages/OrganizationPage';
+import Leaderboard from './pages/Leaderboard';
 function App() {
   return (
     <Router>
@@ -23,6 +25,8 @@ function App() {
         <Route path = "/writeup/:id" element = {<FullWriteup/>} />
         <Route path = "/LandingPage" element = {<LandingPage/>} />
         <Route path = "/CTFEvents" element = {<CTFEvents/>} />
+        <Route path = "/OrganizationPage" element = {<OrganizationPage/>} />
+        <Route path = "/Leaderboard" element = {<Leaderboard/>} />
       </Routes>
     </Router>
   );
