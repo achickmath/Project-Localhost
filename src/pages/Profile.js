@@ -1,8 +1,41 @@
 import { Award, ExternalLink, FileText, Github, Instagram, Linkedin, MessageCircle, Shield } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-  // Previous data objects remain the same
+  const navigate = useNavigate();
+
+  // Updated organizations data
+  const organizations = [
+    {
+      name: "CyberGuard Solutions",
+      role: "Senior Security Analyst",
+      logo: "/api/placeholder/100/100",
+      id: "cyberguard",
+      type: "Company"
+    },
+    {
+      name: "Ethical Hackers Society",
+      role: "Community Lead",
+      logo: "/api/placeholder/100/100",
+      id: "ehs",
+      type: "Club"
+    },
+    {
+      name: "Security Research Lab",
+      role: "Research Associate",
+      logo: "/api/placeholder/100/100",
+      id: "srl",
+      type: "Research Group"
+    }
+  ];
+
+  // Function to handle organization click
+  const handleOrgClick = (orgId) => {
+    navigate(`/organizations/${orgId}`);
+  };
+
+  // Rest of your existing data objects (projects, writeups, certifications)
   const projects = [
     {
       title: "Network Security Scanner",
@@ -44,14 +77,6 @@ export default function Profile() {
     }
   ];
 
-  // New organization data
-  const organization = {
-    name: "CyberGuard Solutions",
-    role: "Senior Security Analyst",
-    logo: "/api/placeholder/100/100",
-    link: "/orgs" // This would be your actual organization page route
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-50">
       <div className="container mx-auto p-6">
@@ -68,7 +93,6 @@ export default function Profile() {
               <h2 className="text-2xl font-bold text-gray-800">John Doe</h2>
               <p className="text-gray-500">Cybersecurity Analyst</p>
               
-              {/* Bio */}
               <p className="text-gray-600 text-center mt-4">
                 Passionate about cybersecurity and helping organizations stay protected in an evolving threat landscape.
               </p>
@@ -82,7 +106,6 @@ export default function Profile() {
                 </button>
               </div>
 
-              {/* External Links */}
               <div className="mt-6 flex space-x-4">
                 <a href="#" className="text-gray-600 hover:text-blue-600">
                   <Linkedin className="h-6 w-6" />
@@ -96,26 +119,36 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Organization Card - New Section */}
+            {/* Organizations Card - Updated Section */}
             <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Current Organization</h3>
-              <a 
-                href={organization.link}
-                className="group flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <img
-                  src={organization.logo}
-                  alt={organization.name}
-                  className="w-16 h-16 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 group-hover:text-blue-600 flex items-center gap-2">
-                    {organization.name}
-                    <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </h4>
-                  <p className="text-gray-600">{organization.role}</p>
-                </div>
-              </a>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Current Organizations</h3>
+              <div className="space-y-4">
+                {organizations.map((org) => (
+                  <div 
+                    key={org.id}
+                    onClick={() => handleOrgClick(org.id)}
+                    className="group flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
+                  >
+                    <img
+                      src={org.logo}
+                      alt={org.name}
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-gray-800 group-hover:text-blue-600 flex items-center gap-2">
+                          {org.name}
+                          <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </h4>
+                        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          {org.type}
+                        </span>
+                      </div>
+                      <p className="text-gray-600">{org.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Certifications */}
@@ -137,7 +170,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Rest of the component remains the same */}
+          {/* Right Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Projects Section */}
             <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">

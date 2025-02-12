@@ -18,6 +18,7 @@ function App() {
         <Route path="/orgs" element={<OrganizationPage />} />
         <Route path="/leaderboard" element={<OrganizationLeaderboard />} />
         <Route path="/" element={<Login />} />
+        <Route path="/organizations/:id" element={<OrganizationPage />} />
       </Routes>
     </Router>
   );
