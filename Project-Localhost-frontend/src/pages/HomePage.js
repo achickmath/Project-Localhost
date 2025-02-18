@@ -1,50 +1,50 @@
-import { ArrowRight, Bell, Home, MessageCircle, Search, Upload, User, LogOut } from 'lucide-react';
+import { 
+  ArrowRight, Bell, Home, MessageCircle, Search, Upload, User, LogOut 
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const NavBar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.clear(); // ✅ Clears authentication data
-  
-    // ✅ Clears history state to prevent back navigation
+    localStorage.clear();
     window.history.replaceState(null, "", "/login");
-  
-    navigate("/login"); // ✅ Redirect to login page
+    navigate("/login");
   };
-  
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl shadow-sm z-50">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-blue-600">LocalHost</h1>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-              />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h1 
+            className="text-2xl font-bold text-blue-600 cursor-pointer hover:text-blue-700 transition"
+            onClick={() => navigate("/home")}
+          >
+            Blue Jack
+          </h1>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search..."
+              className="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+            />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
-          <div className="flex items-center space-x-6">
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Home className="h-6 w-6 text-gray-600" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Bell className="h-6 w-6 text-gray-600" />
-            </button>
-            <a href="/profile" className="p-2 hover:bg-gray-100 rounded-full">
-              <User className="h-6 w-6 text-gray-600" />
-            </a>
-            {/* ✅ Logout Button Added */}
-            <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-full">
-              <LogOut className="h-6 w-6 text-red-500" />
-            </button>
-          </div>
+        </div>
+        <div className="flex items-center space-x-6">
+          <button className="p-2 hover:bg-gray-100 rounded-full">
+            <Home className="h-6 w-6 text-gray-600" />
+          </button>
+          <button className="p-2 hover:bg-gray-100 rounded-full">
+            <Bell className="h-6 w-6 text-gray-600" />
+          </button>
+          <a href="/profile" className="p-2 hover:bg-gray-100 rounded-full">
+            <User className="h-6 w-6 text-gray-600" />
+          </a>
+          <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-full">
+            <LogOut className="h-6 w-6 text-red-500" />
+          </button>
         </div>
       </div>
     </nav>
@@ -118,6 +118,73 @@ const FeedPost = ({ name, title, content }) => {
   );
 };
 
+
+const WriteupZonePreview = () => {
+  const [writeups, setWriteups] = useState([]);
+  const [viewMode, setViewMode] = useState("Trending");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/writeups")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const sortedTrending = [...data.writeups]
+            .sort((a, b) => (b.Upvotes - b.Downvotes) - (a.Upvotes - a.Downvotes))
+            .slice(0, 5);
+          const sortedNewest = [...data.writeups]
+            .sort((a, b) => b.UserWriteUpid - a.UserWriteUpid)
+            .slice(0, 5);
+
+          setWriteups(viewMode === "Trending" ? sortedTrending : sortedNewest);
+        }
+      });
+  }, [viewMode]);
+
+  return (
+    <div className="bg-white/90 backdrop-blur-xl shadow-xl rounded-xl p-6 mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">WriteupZone</h2>
+        <div className="flex space-x-2">
+          <button
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+              viewMode === "Trending" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+            onClick={() => setViewMode("Trending")}
+          >
+            Trending
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+              viewMode === "Newest" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+            onClick={() => setViewMode("Newest")}
+          >
+            Newest
+          </button>
+        </div>
+      </div>
+      <div className="mt-4">
+        {writeups.length > 0 ? (
+          writeups.map((writeup) => (
+            <div key={writeup.UserWriteUpid} className="border-b last:border-0 pb-3 mb-3">
+              <Link to={`/writeup/${writeup.UserWriteUpid}`} className="text-lg font-bold text-blue-600 hover:underline">
+                {writeup.Title}
+              </Link>
+              <p className="text-sm text-gray-600">By {writeup.Author}</p>
+              <p className="text-sm text-gray-500">📅 {new Date(writeup.Date).toDateString()}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500">No writeups available.</p>
+        )}
+      </div>
+      <div className="mt-4 text-right">
+        <Link to="/writeupzone" className="text-blue-500 hover:text-blue-600">See All →</Link>
+      </div>
+    </div>
+  );
+};
+
 export default function HomePage() {
   return (
     <>
@@ -125,14 +192,13 @@ export default function HomePage() {
       <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-50 pt-24">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-12 gap-6">
-            {/* Profile Section */}
             <div className="col-span-3">
               <div className="sticky top-24">
                 <ProfileCard />
               </div>
             </div>
-
-            {/* Main Content */}
+            <div className="col-span-6">
+              {/* Main Content */}
             <div className="col-span-6">
               {/* Create Post Section */}
               <div className="bg-white/90 backdrop-blur-xl shadow-xl rounded-xl p-6 mb-6">
@@ -172,26 +238,14 @@ export default function HomePage() {
                 />
               </div>
             </div>
-
-            {/* News Section */}
+            </div>
             <div className="col-span-3">
               <div className="sticky top-24">
                 <h2 className="text-xl font-semibold mb-4 text-gray-800">Latest News</h2>
-                <NewsCard
-                  title="New Vulnerability Discovered in Popular Framework"
-                  source="CyberNews"
-                  time="2 hours ago"
-                />
-                <NewsCard
-                  title="Industry Leaders Announce Security Coalition"
-                  source="Tech Daily"
-                  time="4 hours ago"
-                />
-                <NewsCard
-                  title="Updates to Security Compliance Standards"
-                  source="Security Weekly"
-                  time="6 hours ago"
-                />
+                <NewsCard title="New Vulnerability Discovered" source="CyberNews" time="2 hours ago" />
+                <NewsCard title="Industry Leaders Announce Security Coalition" source="Tech Daily" time="4 hours ago" />
+                <NewsCard title="Updates to Security Compliance Standards" source="Security Weekly" time="6 hours ago" />
+                <WriteupZonePreview />
               </div>
             </div>
           </div>
