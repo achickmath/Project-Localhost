@@ -58,33 +58,52 @@ export default function Profile() {
   const [editProject, setEditProject] = useState(null);
 
   const [projectData, setProjectData] = useState({ title: "", description: "", tags: "" });
+  const [achievements, setAchievements] = useState([]);
+  const [isAddingAchievement, setIsAddingAchievement] = useState(false);
+  const [editAchievement, setEditAchievement] = useState(null);
+  const [achievementData, setAchievementData] = useState({ title: "", linkURL: "", achievementDate: "" });
 
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditData((prev) => ({ ...prev, profilePicture: reader.result }));
+      };
+      reader.readAsDataURL(file); // ✅ Convert image to Base64
+    }
+  };
+  
+  
   const handleEditProfile = async () => {
     try {
-      console.log("🟢 Submitting profile update:", editData); // ✅ Log the data before sending
-  
       const response = await fetch("http://localhost:5000/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: localStorage.getItem("userLoginId"), ...editData }),
-      });
-  
-      console.log("📨 Server response status:", response.status); // ✅ Log HTTP status
-  
-      const data = await response.json();
-      console.log("📨 Server response data:", data); // ✅ Log response data
-  
-      if (data.success) {
-        // ✅ Preserve firstName and lastName while updating the rest
-        setUser((prevUser) => ({
-          ...prevUser, // ✅ Keep firstName & lastName unchanged
+        body: JSON.stringify({
+          userId: localStorage.getItem("userLoginId"),
           bio: editData.bio,
           gender: editData.gender,
           secondaryEmail: editData.secondaryEmail,
           team: editData.team,
+          profilePicture: editData.profilePicture, // ✅ Include profile picture
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        setUser((prevUser) => ({
+          ...prevUser,
+          bio: editData.bio,
+          gender: editData.gender,
+          secondaryEmail: editData.secondaryEmail,
+          team: editData.team,
+          profilePicture: editData.profilePicture, // ✅ Update state
         }));
   
-        setIsEditing(false); // ✅ Close modal
+        setIsEditing(false);
         alert("Profile updated successfully!");
       } else {
         alert("❌ Failed to update profile: " + data.message);
@@ -94,6 +113,8 @@ export default function Profile() {
       alert("Something went wrong. Please try again.");
     }
   };
+  
+  
   
   const handleSaveProject = async () => {
     const userLoginId = localStorage.getItem("userLoginId");
@@ -133,7 +154,59 @@ export default function Profile() {
       console.error("❌ Error:", error);
     }
   };
+
+  const handleSaveAchievement = async () => {
+    const userLoginId = localStorage.getItem("userLoginId");
   
+    const endpoint = editAchievement ? "edit" : "add";
+    const achievementPayload = {
+      userLoginId,
+      achievementId: editAchievement?.Achievmentsid || null, // ✅ Send ID only if editing
+      title: achievementData.title,
+      linkURL: achievementData.linkURL,
+      achievementDate: achievementData.achievementDate,
+    };
+  
+    try {
+      const response = await fetch(`http://localhost:5000/achievements/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(achievementPayload),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        alert(editAchievement ? "Achievement updated!" : "Achievement added!");
+  
+        // Refresh achievements
+        const updatedAchievements = editAchievement
+          ? achievements.map((a) => (a.Achievmentsid === editAchievement.Achievmentsid ? { ...a, ...achievementData } : a))
+          : [...achievements, { ...achievementData, Achievmentsid: data.achievementId }];
+  
+          const fetchAchievements = async () => {
+            try {
+              const userLoginId = localStorage.getItem("userLoginId");
+              const response = await fetch(`http://localhost:5000/achievements/user/${userLoginId}`);
+              const data = await response.json();
+          
+              if (data.success) {
+                setAchievements(data.achievements);
+              }
+            } catch (error) {
+              console.error("❌ Error fetching achievements:", error);
+            }
+          };
+        fetchAchievements();          
+        setIsAddingAchievement(false);
+        setEditAchievement(null);
+      } else {
+        alert("❌ Failed to save achievement.");
+      }
+    } catch (error) {
+      console.error("❌ Error saving achievement:", error);
+    }
+  };
   
 
   useEffect(() => {
@@ -143,7 +216,7 @@ export default function Profile() {
     const userLoginId = localStorage.getItem("userLoginId");
 
     if (!token) {
-        navigate("/login");
+        navigate("/login"); 
         return;
     }
 
@@ -172,25 +245,27 @@ export default function Profile() {
     
       fetchProjects();
 
-    const fetchUserProfile = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
-        const data = await response.json();
-  
-        if (data.success) {
-          setUser({
-            firstName: data.user.firstName || "User",
-            lastName: data.user.lastName || "",
-            bio: data.user.bio || "No bio added.",
-            gender: data.user.gender || "Not specified",
-            secondaryEmail: data.user.secondaryEmail || "Not added",
-            team: data.user.team || "Not assigned",
-          });
+      const fetchUserProfile = async () => {
+        try {
+          const userLoginId = localStorage.getItem("userLoginId");
+          const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
+          const data = await response.json();
+      
+          if (data.success) {
+            setUser({
+              firstName: data.user.firstName || "User",
+              lastName: data.user.lastName || "",
+              bio: data.user.bio || "No bio added.",
+              gender: data.user.gender || "Not specified",
+              secondaryEmail: data.user.secondaryEmail || "Not added",
+              team: data.user.team || "Not assigned",
+              profilePicture: data.user.profilePicture || "/api/placeholder/400/400", // ✅ Fix: Ensure Base64 image
+            });
+          }
+        } catch (error) {
+          console.error("❌ Error fetching user profile:", error);
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      }
-    };
+      };
   
     fetchUserProfile();
   
@@ -208,24 +283,28 @@ export default function Profile() {
             console.error("Error fetching writeups:", error);
         }
     };
-
+    
     fetchWriteups();
-}, [navigate]);
 
+    const fetchAchievements = async () => {
+      try {
+        const userLoginId = localStorage.getItem("userLoginId");
+        const response = await fetch(`http://localhost:5000/achievements/user/${userLoginId}`);
+        const data = await response.json();
+    
+        console.log("🟢 Achievements received:", data); // ✅ Debugging log
+    
+        if (data.success) {
+          setAchievements(data.achievements);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching achievements:", error);
+      }
+    };
+    
+    fetchAchievements();
 
-
-  const certifications = [
-    {
-      title: "Certified Information Systems Security Professional (CISSP)",
-      date: "2023",
-      link: "#"
-    },
-    {
-      title: "Certified Ethical Hacker (CEH)",
-      date: "2022",
-      link: "#"
-    }
-  ];
+  }, [navigate]);
 
   const organization = {
     name: "CyberGuard Solutions",
@@ -243,7 +322,12 @@ export default function Profile() {
           {/* ✅ Profile Info Section */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8 flex flex-col items-center">
-              <img src="/api/placeholder/400/400" alt="User Avatar" className="w-32 h-32 rounded-full mb-4 object-cover" />
+              <img
+                src={user.profilePicture}
+                alt="User Avatar"
+                className="w-32 h-32 rounded-full mb-4 object-cover"
+              />
+
               <h2 className="text-2xl font-bold text-gray-800">{`${user.firstName} ${user.lastName}`}</h2>
               <p className="text-gray-500">Cybersecurity Analyst</p>
 
@@ -271,6 +355,23 @@ export default function Profile() {
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
 
+            {/* Profile Picture Upload */}
+            <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
+            <input
+              type="file"
+              accept="image/*"
+              className="w-full border rounded-lg p-2 mb-3"
+              onChange={(e) => handleImageUpload(e)}
+            />
+
+            {/* Display the selected image preview */}
+            {editData.profilePicture && (
+              <img
+                src={editData.profilePicture}
+                alt="Profile Preview"
+                className="w-24 h-24 rounded-full object-cover mt-2"
+              />
+            )}
             {/* Bio */}
             <label className="block text-sm font-medium text-gray-700">Bio</label>
             <textarea 
@@ -366,23 +467,113 @@ export default function Profile() {
               </a>
             </div>
 
-             {/* Certifications */}
-             <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Certifications</h3>
-              <div className="space-y-4">
-                {certifications.map((cert, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-800">{cert.title}</p>
-                      <p className="text-sm text-gray-500">{cert.date}</p>
+              <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Certifications & Achievements</h3>
+
+                {/* ✅ Add Achievement Button */}
+                <button 
+                  onClick={() => { 
+                    setIsAddingAchievement(true);
+                    setEditAchievement(null);
+                    setAchievementData({ title: "", linkURL: "", achievementDate: "" });
+                  }}
+                  className="flex items-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition mt-2"
+                >
+                  <FaPlus className="h-5 w-5 mr-2" /> Add Achievement
+                </button>
+
+                <div className="space-y-4 mt-4">
+                  {achievements.map((achievement, index) => (
+                    <div key={index} className="flex justify-between items-center border-b pb-3">
+                      <div>
+                        <p className="font-semibold text-gray-800">{achievement.Title}</p>
+                        <p className="text-sm text-gray-500">
+                          {achievement.achievementDate && !isNaN(new Date(achievement.achievementDate))
+                            ? new Date(achievement.achievementDate).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "No Date Available"}
+                        </p>
+                        <a href={achievement.LinkURL} className="text-blue-500 hover:underline text-sm">
+                          View Certificate
+                        </a>
+                      </div>
+                      <div>
+                        <button 
+                          onClick={() => { 
+                            setEditAchievement(achievement);
+                            setAchievementData({
+                              title: achievement.Title,
+                              linkURL: achievement.LinkURL,
+                              achievementDate: achievement.AchivementDate,
+                            });
+                            setIsAddingAchievement(true);
+                          }}
+                          className="text-yellow-500 hover:text-yellow-600 px-3"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm("Are you sure you want to delete this achievement?")) {
+                              await fetch(`http://localhost:5000/achievements/delete/${achievement.Achievmentsid}`, { method: "DELETE" });
+                              setAchievements(achievements.filter((a) => a.Achievmentsid !== achievement.Achievmentsid));
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-600 px-3"
+                        >
+                          🗑 Delete
+                        </button>
+                      </div>
                     </div>
-                    <a href={cert.link} className="text-blue-500 hover:text-blue-600">
-                      <Award className="h-5 w-5" />
-                    </a>
+                  ))}
+                </div>
+
+                {/* ✅ Achievement Modal */}
+                {isAddingAchievement && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+                      <h2 className="text-xl font-bold mb-4">{editAchievement ? "Edit Achievement" : "Add Achievement"}</h2>
+
+                      <label className="block text-sm font-medium text-gray-700">Title</label>
+                      <input 
+                        type="text" 
+                        className="w-full border rounded-lg p-2 mb-3"
+                        value={achievementData.title}
+                        onChange={(e) => setAchievementData({ ...achievementData, title: e.target.value })}
+                      />
+
+                      <label className="block text-sm font-medium text-gray-700">Certificate Link</label>
+                      <input 
+                        type="text" 
+                        className="w-full border rounded-lg p-2 mb-3"
+                        value={achievementData.linkURL}
+                        onChange={(e) => setAchievementData({ ...achievementData, linkURL: e.target.value })}
+                      />
+
+                      <label className="block text-sm font-medium text-gray-700">Date</label>
+                      <input 
+                        type="date" 
+                        className="w-full border rounded-lg p-2 mb-3"
+                        value={achievementData.achievementDate}
+                        onChange={(e) => setAchievementData({ ...achievementData, achievementDate: e.target.value })}
+                      />
+
+                      <div className="flex justify-between">
+                        <button className="bg-green-500 text-white px-4 py-2 rounded-lg" onClick={handleSaveAchievement}>
+                          {editAchievement ? "Update" : "Save"}
+                        </button>
+                        <button className="bg-gray-400 text-white px-4 py-2 rounded-lg" onClick={() => setIsAddingAchievement(false)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
+
 
               {/* ✅ Projects Section  */}
               <div className="lg:col-span-2 space-y-6">
@@ -402,7 +593,7 @@ export default function Profile() {
                   >
                     <FaPlus className="h-5 w-5 mr-2" /> Add Project
                   </button>
-                </div>
+                </div>  
                 <div className="space-y-6">
                   {projects.length > 0 ? (
                     projects.map((project, index) => (

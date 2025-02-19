@@ -6,6 +6,25 @@ import { useNavigate, Link } from 'react-router-dom';
 
 const NavBar = () => {
   const navigate = useNavigate();
+  const [profilePicture, setProfilePicture] = useState(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userLoginId = localStorage.getItem("userLoginId");
+        const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setProfilePicture(data.user.profilePicture || "/api/placeholder/80/80");
+        }
+      } catch (error) {
+        console.error("❌ Error fetching profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -39,9 +58,14 @@ const NavBar = () => {
           <button className="p-2 hover:bg-gray-100 rounded-full">
             <Bell className="h-6 w-6 text-gray-600" />
           </button>
-          <a href="/profile" className="p-2 hover:bg-gray-100 rounded-full">
-            <User className="h-6 w-6 text-gray-600" />
-          </a>
+          {/* ✅ Display Profile Picture in NavBar */}
+          <Link to="/profile" className="p-2 hover:bg-gray-100 rounded-full">
+            <img
+              src={profilePicture}
+              alt="User Avatar"
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          </Link>
           <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-full">
             <LogOut className="h-6 w-6 text-red-500" />
           </button>
@@ -52,25 +76,38 @@ const NavBar = () => {
 };
 
 const ProfileCard = () => {
-  const [user, setUser] = useState({ firstName: "", lastName: "" });
+  const [user, setUser] = useState({ firstName: "", lastName: "", profilePicture: "/api/placeholder/80/80" });
 
   useEffect(() => {
-    const storedFirstName = localStorage.getItem("firstName");
-    const storedLastName = localStorage.getItem("lastName");
+    const fetchUserProfile = async () => {
+      try {
+        const userLoginId = localStorage.getItem("userLoginId");
+        const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
+        const data = await response.json();
 
-    setUser({
-      firstName: storedFirstName || "Your",
-      lastName: storedLastName || "Name",
-    });
+        if (data.success) {
+          setUser({
+            firstName: data.user.firstName || "Your",
+            lastName: data.user.lastName || "Name",
+            profilePicture: data.user.profilePicture || "/api/placeholder/80/80",
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error fetching profile:", error);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
 
   return (
     <div className="bg-white/90 backdrop-blur-xl shadow-xl rounded-xl p-6">
       <div className="flex flex-col items-center">
+        {/* ✅ Display Profile Picture */}
         <img
-          src="/api/placeholder/80/80"
+          src={user.profilePicture}
           alt="Profile Avatar"
-          className="w-20 h-20 rounded-full mb-4"
+          className="w-20 h-20 rounded-full mb-4 object-cover"
         />
         <h2 className="text-xl font-semibold text-gray-800">{`${user.firstName} ${user.lastName}`}</h2>
         <p className="text-gray-500 mb-4">Security Professional</p>
@@ -186,6 +223,27 @@ const WriteupZonePreview = () => {
 };
 
 export default function HomePage() {
+  const [user, setUser] = useState({ profilePicture: "/api/placeholder/40/40" })
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userLoginId = localStorage.getItem("userLoginId");
+        const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          console.log("🟢 Profile Picture URL:", data.user.profilePicture); // ✅ Debugging log
+          setUser({
+            profilePicture: data.user.profilePicture || "/api/placeholder/40/40",
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error fetching profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
   return (
     <>
       <NavBar />
@@ -204,10 +262,11 @@ export default function HomePage() {
               <div className="bg-white/90 backdrop-blur-xl shadow-xl rounded-xl p-6 mb-6">
                 <div className="flex items-center">
                   <img
-                    src="/api/placeholder/40/40"
+                    src={user.profilePicture}
                     alt="User Avatar"
-                    className="w-10 h-10 rounded-full mr-4"
+                    className="w-10 h-10 rounded-full object-cover mr-4"
                   />
+
                   <input
                     type="text"
                     placeholder="What's on your mind?"

@@ -8,12 +8,18 @@ router.get("/profile/:id", async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      "SELECT firstName, lastName, PrimaryEmail AS email, Bio, Gender, SecondaryEmail, Team FROM UserProfile WHERE UserLoginid = ?",
+      "SELECT firstName, lastName, PrimaryEmail AS email, Bio, Gender, SecondaryEmail, Team, ProfilePicture FROM UserProfile WHERE UserLoginid = ?",
       [userId]
     );
 
     if (rows.length > 0) {
       const user = rows[0];
+
+      // ✅ Convert BLOB to Base64
+      let profilePictureBase64 = null;
+      if (user.ProfilePicture) {
+        profilePictureBase64 = `data:image/png;base64,${user.ProfilePicture.toString("base64")}`;
+      }
 
       res.json({
         success: true,
@@ -25,6 +31,7 @@ router.get("/profile/:id", async (req, res) => {
           gender: user.Gender || "Not specified",
           secondaryEmail: user.SecondaryEmail || "Not added",
           team: user.Team || "Red",
+          profilePicture: profilePictureBase64, // ✅ Now returning profile picture
         },
       });
     } else {
@@ -36,30 +43,44 @@ router.get("/profile/:id", async (req, res) => {
   }
 });
 
-// ✅ Update user profile
+
+//Update user bio
 router.post("/profile/update", async (req, res) => {
-  const { userId, bio, gender, secondaryEmail, team } = req.body;
+  const { userId, bio, gender, secondaryEmail, team, profilePicture } = req.body;
 
   if (!userId) {
-    return res.status(400).json({ success: false, message: "User ID is required." });
+    return res.status(400).json({ success: false, message: "User ID is required" });
   }
 
   try {
-    const updateQuery = `
-      UPDATE UserProfile 
-      SET Bio = ?, Gender = ?, SecondaryEmail = ?, Team = ? 
-      WHERE UserLoginid = ?;
+    let query = `
+      UPDATE userprofile 
+      SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ? 
+      WHERE UserLoginid = ?
     `;
+    let values = [bio, gender, secondaryEmail, team, userId];
 
-    await db.query(updateQuery, [bio, gender, secondaryEmail, team, userId]);
+    // ✅ If profilePicture exists, store it as BLOB
+    if (profilePicture) {
+      const imageBuffer = Buffer.from(profilePicture.split(",")[1], "base64");
 
-    console.log("✅ Profile updated successfully for User ID:", userId);
-    res.json({ success: true, message: "Profile updated successfully." });
+      query = `
+        UPDATE userprofile 
+        SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ?, ProfilePicture = ? 
+        WHERE UserLoginid = ?
+      `;
+      values = [bio, gender, secondaryEmail, team, imageBuffer, userId];
+    }
+
+    await db.query(query, values);
+    res.json({ success: true, message: "Profile updated successfully" });
   } catch (error) {
-    console.error("❌ Profile update error:", error);
+    console.error("❌ Error updating profile:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
+
 
 // ✅ Fetch User Projects
 router.get("/projects/user/:id", async (req, res) => {
@@ -272,6 +293,84 @@ router.post("/writeup/vote", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+// ✅ Fetch User Achievements
+router.get("/achievements/user/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const [achievements] = await db.execute(
+      `SELECT Achievmentsid, Title, LinkURL, 
+       DATE_FORMAT(AchivementDate, '%Y-%m-%d') AS achievementDate, 
+       UserLoginid FROM achievments WHERE UserLoginid = ?`, 
+      [userId]
+    );
+
+    res.json({ success: true, achievements });
+  } catch (error) {
+    console.error("❌ Error fetching achievements:", error);
+    res.status(500).json({ success: false, message: "Error fetching achievements" });
+  }
+});
+
+
+// ✅ Add Achievement
+router.post("/achievements/add", async (req, res) => {
+  const { userLoginId, title, linkURL, achievementDate } = req.body;
+
+  try {
+    await db.execute(
+      "INSERT INTO achievments (Title, LinkURL, AchivementDate, UserLoginid) VALUES (?, ?, ?, ?)",
+      [title, linkURL, achievementDate, userLoginId]
+    );
+
+    // ✅ Fetch latest achievements to send updated list
+    const [achievements] = await db.execute(
+      "SELECT Achievmentsid, Title, LinkURL, DATE_FORMAT(AchivementDate, '%Y-%m-%d') AS achievementDate, UserLoginid FROM achievments WHERE UserLoginid = ?",
+      [userLoginId]
+    );
+
+    res.json({ success: true, achievements });
+  } catch (error) {
+    console.error("❌ Error adding achievement:", error);
+    res.status(500).json({ success: false, message: "Error adding achievement" });
+  }
+});
+
+// ✅ Edit Achievement
+router.post("/achievements/edit", async (req, res) => {
+  const { achievementId, title, linkURL, achievementDate } = req.body;
+
+  if (!achievementId || !title) {
+    return res.status(400).json({ success: false, message: "Missing required fields." });
+  }
+
+  try {
+    await db.query(
+      "UPDATE achievments SET Title = ?, LinkURL = ?, AchivementDate = ? WHERE Achievmentsid = ?",
+      [title, linkURL, achievementDate, achievementId]
+    );
+    res.json({ success: true, message: "Achievement updated successfully." });
+  } catch (error) {
+    console.error("❌ Error updating achievement:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// ✅ Delete Achievement
+router.delete("/achievements/delete/:id", async (req, res) => {
+  const achievementId = req.params.id;
+
+  try {
+    await db.query("DELETE FROM achievments WHERE Achievmentsid = ?", [achievementId]);
+    res.json({ success: true, message: "Achievement deleted successfully." });
+  } catch (error) {
+    console.error("❌ Error deleting achievement:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+module.exports = router;
+
 
 
 
