@@ -1,7 +1,7 @@
-import { Award, ExternalLink, FileText, Github, Instagram, Linkedin, MessageCircle, Shield, LogOut, Edit } from 'lucide-react';
+import { Award, Edit, ExternalLink, FileText, Github, Instagram, Linkedin, LogOut, MessageCircle, Shield } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import {FaPlus} from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ export default function Profile() {
     try {
       console.log("🟢 Submitting profile update:", editData); // ✅ Log the data before sending
   
-      const response = await fetch("http://localhost:5000/profile/update", {
+      const response = await fetch("http://localhost:5001/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: localStorage.getItem("userLoginId"), ...editData }),
@@ -110,7 +110,7 @@ export default function Profile() {
     console.log("🟢 Submitting project:", projectPayload); // ✅ Debugging log
   
     try {
-      const response = await fetch(`http://localhost:5000/projects/${endpoint}`, {
+      const response = await fetch(`http://localhost:5001/projects/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(projectPayload),
@@ -155,7 +155,7 @@ export default function Profile() {
       // Fetch user projects
       const fetchProjects = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/projects/user/${userLoginId}`);
+          const response = await fetch(`http://localhost:5001/projects/user/${userLoginId}`);
           const data = await response.json();
     
           console.log("🟢 Projects received in frontend:", data); // ✅ Debugging log
@@ -174,7 +174,7 @@ export default function Profile() {
 
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
+        const response = await fetch(`http://localhost:5001/profile/${userLoginId}`);
         const data = await response.json();
   
         if (data.success) {
@@ -198,7 +198,7 @@ export default function Profile() {
     // Fetch user writeups
     const fetchWriteups = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/writeup/user/${userLoginId}`);
+            const response = await fetch(`http://localhost:5001/writeup/user/${userLoginId}`);
             const data = await response.json();
 
             if (data.success) {

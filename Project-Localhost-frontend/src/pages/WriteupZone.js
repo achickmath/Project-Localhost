@@ -1,6 +1,6 @@
+import { LogOut, Star } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Star, LogOut } from "lucide-react";
 
 export default function WriteupZone() {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ export default function WriteupZone() {
   useEffect(() => {
     const fetchWriteups = async () => {
       try {
-        const res = await fetch("http://localhost:5000/writeups");
+        const res = await fetch("http://localhost:5001/writeups");
         const data = await res.json();
 
         if (data.success) {
@@ -34,7 +34,7 @@ export default function WriteupZone() {
 
     const fetchFavorites = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/favorites/${userId}`);
+        const res = await fetch(`http://localhost:5001/favorites/${userId}`);
         const data = await res.json();
         if (data.success) {
           setFavorites(data.favorites.map((fav) => fav.UserWriteUpid));
@@ -56,7 +56,7 @@ export default function WriteupZone() {
 
   const toggleFavorite = async (writeupId) => {
     try {
-      const response = await fetch("http://localhost:5000/favorites/toggle", {
+      const response = await fetch("http://localhost:5001/favorites/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, writeupId }),

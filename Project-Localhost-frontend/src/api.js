@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "http://localhost:5001";
 
 export const fetchUserProfile = async (email) => {
     try {

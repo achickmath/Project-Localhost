@@ -1,5 +1,5 @@
-import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Writeup() {
     const[title, setTitle] = useState('');
@@ -14,7 +14,7 @@ export default function Writeup() {
       console.log("🟢 Submitting writeup:", { title, category, content, userLoginId });
   
       try {
-          const response = await fetch("http://localhost:5000/writeup/add", {
+          const response = await fetch("http://localhost:5001/writeup/add", {
               method: "POST",
               headers: {
                   "Content-Type": "application/json",
