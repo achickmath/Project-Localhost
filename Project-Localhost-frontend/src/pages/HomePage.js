@@ -1,8 +1,10 @@
-import { 
-  ArrowRight, Bell, Home, MessageCircle, Search, Upload, User, LogOut 
+import {
+  ArrowRight, Bell, Home,
+  LogOut,
+  MessageCircle, Search, Upload, User
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -124,7 +126,7 @@ const WriteupZonePreview = () => {
   const [viewMode, setViewMode] = useState("Trending");
 
   useEffect(() => {
-    fetch("http://localhost:5000/writeups")
+    fetch("http://localhost:5001/writeups")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
