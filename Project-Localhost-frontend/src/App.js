@@ -3,9 +3,10 @@ import HomePage from "./pages/HomePage";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Signup from "./pages/Signup";
-import Writeup from './pages/Writeup';
-import WriteupZone from './pages/WriteupZone';
-import FullWriteup from './pages/FullWriteup';
+import Writeup from "./pages/Writeup";
+import WriteupZone from "./pages/WriteupZone";
+import FullWriteup from "./pages/FullWriteup";
+import OrganizationPage from "./pages/OrganizationPage"; // ✅ Import Organization Page
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem("authToken");
@@ -26,9 +27,10 @@ function App() {
         {/* ✅ Protecting Routes */}
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path = "/Writeup" element = {<Writeup />} />
-        <Route path = "/WriteupZone" element = {<WriteupZone/>} />
-        <Route path = "/writeup/:id" element = {<FullWriteup/>} />
+        <Route path="/writeup" element={<ProtectedRoute><Writeup /></ProtectedRoute>} />
+        <Route path="/writeupzone" element={<ProtectedRoute><WriteupZone /></ProtectedRoute>} />
+        <Route path="/writeup/:id" element={<ProtectedRoute><FullWriteup /></ProtectedRoute>} />
+        <Route path="/organization" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} /> {/* ✅ Added Organization Page Route */}
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
