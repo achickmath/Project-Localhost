@@ -53,22 +53,14 @@ router.post("/profile/update", async (req, res) => {
   }
 
   try {
-    let query = `
-      UPDATE userprofile 
-      SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ? 
-      WHERE UserLoginid = ?
-    `;
+    let query = `UPDATE userprofile SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ? WHERE UserLoginid = ?`;
     let values = [bio, gender, secondaryEmail, team, userId];
 
-    // ✅ If profilePicture exists, store it as BLOB
-    if (profilePicture) {
+    // ✅ Only update ProfilePicture if it's not empty
+    if (profilePicture !== undefined && profilePicture !== null && profilePicture.trim() !== "") {
       const imageBuffer = Buffer.from(profilePicture.split(",")[1], "base64");
 
-      query = `
-        UPDATE userprofile 
-        SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ?, ProfilePicture = ? 
-        WHERE UserLoginid = ?
-      `;
+      query = `UPDATE userprofile SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ?, ProfilePicture = ? WHERE UserLoginid = ?`;
       values = [bio, gender, secondaryEmail, team, imageBuffer, userId];
     }
 
@@ -299,9 +291,9 @@ router.get("/achievements/user/:userId", async (req, res) => {
   const userId = req.params.userId;
   try {
     const [achievements] = await db.execute(
-      `SELECT Achievmentsid, Title, LinkURL, 
+      `SELECT AchievementsID, Title, LinkURL, 
        DATE_FORMAT(AchivementDate, '%Y-%m-%d') AS achievementDate, 
-       UserLoginid FROM achievments WHERE UserLoginid = ?`, 
+       UserLoginid FROM achievements WHERE UserLoginid = ?`, 
       [userId]
     );
 
@@ -319,13 +311,13 @@ router.post("/achievements/add", async (req, res) => {
 
   try {
     await db.execute(
-      "INSERT INTO achievments (Title, LinkURL, AchivementDate, UserLoginid) VALUES (?, ?, ?, ?)",
+      "INSERT INTO achievements (Title, LinkURL, AchivementDate, UserLoginid) VALUES (?, ?, ?, ?)",
       [title, linkURL, achievementDate, userLoginId]
     );
 
     // ✅ Fetch latest achievements to send updated list
     const [achievements] = await db.execute(
-      "SELECT Achievmentsid, Title, LinkURL, DATE_FORMAT(AchivementDate, '%Y-%m-%d') AS achievementDate, UserLoginid FROM achievments WHERE UserLoginid = ?",
+      "SELECT AchievementsID, Title, LinkURL, DATE_FORMAT(AchivementDate, '%Y-%m-%d') AS achievementDate, UserLoginid FROM achievements WHERE UserLoginid = ?",
       [userLoginId]
     );
 
@@ -340,38 +332,51 @@ router.post("/achievements/add", async (req, res) => {
 router.post("/achievements/edit", async (req, res) => {
   const { achievementId, title, linkURL, achievementDate } = req.body;
 
+  console.log("🟢 Received Edit Request:", req.body); // ✅ Debugging log
+
   if (!achievementId || !title) {
     return res.status(400).json({ success: false, message: "Missing required fields." });
   }
 
   try {
-    await db.query(
-      "UPDATE achievments SET Title = ?, LinkURL = ?, AchivementDate = ? WHERE Achievmentsid = ?",
+    const [result] = await db.query(
+      "UPDATE achievements SET Title = ?, LinkURL = ?, AchivementDate = ? WHERE AchievementsID = ?",
       [title, linkURL, achievementDate, achievementId]
     );
-    res.json({ success: true, message: "Achievement updated successfully." });
+
+    console.log("✅ Edit Query Result:", result); // ✅ Log database result
+
+    if (result.affectedRows > 0) {
+      res.json({ success: true, message: "Achievement updated successfully." });
+    } else {
+      res.status(404).json({ success: false, message: "Achievement not found." });
+    }
   } catch (error) {
     console.error("❌ Error updating achievement:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
-// ✅ Delete Achievement
+
 router.delete("/achievements/delete/:id", async (req, res) => {
-  const achievementId = req.params.id;
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: "Achievement ID is required." });
+  }
 
   try {
-    await db.query("DELETE FROM achievments WHERE Achievmentsid = ?", [achievementId]);
-    res.json({ success: true, message: "Achievement deleted successfully." });
+    const [result] = await db.query(`DELETE FROM achievements WHERE AchievementsID = ?`, [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ success: true, message: "Achievement deleted successfully." });
+    } else {
+      res.status(404).json({ success: false, message: "Achievement not found." });
+    }
   } catch (error) {
     console.error("❌ Error deleting achievement:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
-
-module.exports = router;
-
-
-
 
 module.exports = router;

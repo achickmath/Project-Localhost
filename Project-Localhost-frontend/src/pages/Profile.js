@@ -63,6 +63,14 @@ export default function Profile() {
   const [editAchievement, setEditAchievement] = useState(null);
   const [achievementData, setAchievementData] = useState({ title: "", linkURL: "", achievementDate: "" });
 
+    // ✅ Organization State
+  const [isJoiningOrganization, setIsJoiningOrganization] = useState(false);
+  const [organizationData, setOrganizationData] = useState({
+    email: "",
+    joinCode: "",
+  });
+  const [userOrganization, setUserOrganization] = useState(null);
+
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -161,11 +169,13 @@ export default function Profile() {
     const endpoint = editAchievement ? "edit" : "add";
     const achievementPayload = {
       userLoginId,
-      achievementId: editAchievement?.Achievmentsid || null, // ✅ Send ID only if editing
+      achievementId: editAchievement ? editAchievement.AchievementsID || editAchievement.achievementId : null,  // ✅ Ensure correct ID
       title: achievementData.title,
       linkURL: achievementData.linkURL,
       achievementDate: achievementData.achievementDate,
     };
+  
+    console.log("🟢 Sending Achievement Data:", achievementPayload); // ✅ Log request
   
     try {
       const response = await fetch(`http://localhost:5000/achievements/${endpoint}`, {
@@ -175,29 +185,19 @@ export default function Profile() {
       });
   
       const data = await response.json();
+      console.log("📨 Server Response:", data); // ✅ Log response
   
       if (data.success) {
         alert(editAchievement ? "Achievement updated!" : "Achievement added!");
   
         // Refresh achievements
         const updatedAchievements = editAchievement
-          ? achievements.map((a) => (a.Achievmentsid === editAchievement.Achievmentsid ? { ...a, ...achievementData } : a))
-          : [...achievements, { ...achievementData, Achievmentsid: data.achievementId }];
+          ? achievements.map((a) =>
+              a.AchievementsID === editAchievement.AchievementsID ? { ...a, ...achievementData } : a
+            )
+          : [...achievements, { ...achievementData, AchievementsID: data.achievementId }];
   
-          const fetchAchievements = async () => {
-            try {
-              const userLoginId = localStorage.getItem("userLoginId");
-              const response = await fetch(`http://localhost:5000/achievements/user/${userLoginId}`);
-              const data = await response.json();
-          
-              if (data.success) {
-                setAchievements(data.achievements);
-              }
-            } catch (error) {
-              console.error("❌ Error fetching achievements:", error);
-            }
-          };
-        fetchAchievements();          
+        setAchievements(updatedAchievements);
         setIsAddingAchievement(false);
         setEditAchievement(null);
       } else {
@@ -207,6 +207,69 @@ export default function Profile() {
       console.error("❌ Error saving achievement:", error);
     }
   };
+  
+
+  // ✅ Handle Joining an Organization
+  const handleJoinOrganization = async () => {
+    if (!organizationData.email && !organizationData.joinCode) {
+      alert("Please enter either an organization email or join code.");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:5000/organization/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userLoginId: localStorage.getItem("userLoginId"),
+          email: organizationData.email,
+          joinCode: organizationData.joinCode,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        alert("Successfully joined organization!");
+        setUserOrganization(data.organization); // ✅ Update state immediately
+        setIsJoiningOrganization(false);
+      } else {
+        alert("❌ Failed to join: " + data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error joining organization:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+  
+
+  const handleLeaveOrganization = async () => {
+    const confirmLeave = window.confirm("Are you sure you want to leave this organization?");
+    if (!confirmLeave) return;
+  
+    try {
+      const response = await fetch("http://localhost:5000/organization/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userLoginId: localStorage.getItem("userLoginId"),
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        alert("Successfully left the organization.");
+        setUserOrganization(null); // ✅ Ensure UI updates
+      } else {
+        alert("❌ Failed to leave: " + data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error leaving organization:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+  
   
 
   useEffect(() => {
@@ -304,14 +367,28 @@ export default function Profile() {
     
     fetchAchievements();
 
-  }, [navigate]);
+    const fetchUserOrganization = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/organization/user/${localStorage.getItem("userLoginId")}`
+        );
+        const data = await response.json();
+  
+        console.log("🟢 Fetched Organization Data:", data);
+  
+        if (data.success) {
+          setUserOrganization(data.organization);
+        } else {
+          setUserOrganization(null);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching user organization:", error);
+      }
+    };
+  
+    fetchUserOrganization();
 
-  const organization = {
-    name: "CyberGuard Solutions",
-    role: "Senior Security Analyst",
-    logo: "/api/placeholder/100/100",
-    link: "/orgs"
-  };
+  }, [navigate]);
 
   return (
     
@@ -447,25 +524,80 @@ export default function Profile() {
 
           {/* Organization Card - New Section */}
           <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Current Organization</h3>
-              <a 
-                href={organization.link}
-                className="group flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Current Organization</h3>
+
+            {userOrganization ? (
+              // ✅ Show Organization Info if User is Part of One
+              <div className="group flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
                 <img
-                  src={organization.logo}
-                  alt={organization.name}
+                  src={userOrganization.logo || "/Icons/org-placeholder.png"}
+                  alt={userOrganization.name}
                   className="w-16 h-16 rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 group-hover:text-blue-600 flex items-center gap-2">
-                    {organization.name}
+                  <h4
+                    className="font-semibold text-gray-800 cursor-pointer group-hover:text-blue-600 flex items-center gap-2"
+                    onClick={() => navigate("/organization")}
+                  >
+                    {userOrganization.name}
                     <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </h4>
-                  <p className="text-gray-600">{organization.role}</p>
+                  <p className="text-gray-600">{userOrganization.role}</p>
                 </div>
-              </a>
-            </div>
+                <button
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+                  onClick={handleLeaveOrganization}
+                >
+                  Leave
+                </button>
+              </div>
+            ) : (
+              // ✅ Show Placeholder if Not Part of Any Organization
+              <div className="flex flex-col items-center text-gray-500">
+                <p className="text-sm">You are not part of any organization.</p>
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-4 rounded-lg"
+                  onClick={() => setIsJoiningOrganization(true)}
+                >
+                  Join Organization
+                </button>
+              </div>
+            )}
+
+            {/* ✅ Join Organization Modal */}
+            {isJoiningOrganization && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+                  <h2 className="text-xl font-bold mb-4">Join Organization</h2>
+
+                  <label className="block text-sm font-medium text-gray-700">Organization Email</label>
+                  <input
+                    type="email"
+                    className="w-full border rounded-lg p-2 mb-3"
+                    value={organizationData.email}
+                    onChange={(e) => setOrganizationData({ ...organizationData, email: e.target.value })}
+                  />
+
+                  <label className="block text-sm font-medium text-gray-700">Join Code</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2 mb-3"
+                    value={organizationData.joinCode}
+                    onChange={(e) => setOrganizationData({ ...organizationData, joinCode: e.target.value })}
+                  />
+
+                  <div className="flex justify-between">
+                    <button className="bg-green-500 text-white px-4 py-2 rounded-lg" onClick={handleJoinOrganization}>
+                      Join
+                    </button>
+                    <button className="bg-gray-400 text-white px-4 py-2 rounded-lg" onClick={() => setIsJoiningOrganization(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
               <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Certifications & Achievements</h3>
@@ -503,13 +635,19 @@ export default function Profile() {
                       <div>
                         <button 
                           onClick={() => { 
-                            setEditAchievement(achievement);
+                            setEditAchievement({
+                              AchievementsID: achievement.AchievementsID || achievement.achievementId, // ✅ Ensure ID is set
+                              title: achievement.Title,
+                              linkURL: achievement.LinkURL,
+                              achievementDate: achievement.AchievementDate,
+                            });                            
                             setAchievementData({
                               title: achievement.Title,
                               linkURL: achievement.LinkURL,
-                              achievementDate: achievement.AchivementDate,
+                              achievementDate: achievement.AchievementDate,
                             });
                             setIsAddingAchievement(true);
+                            
                           }}
                           className="text-yellow-500 hover:text-yellow-600 px-3"
                         >
@@ -518,8 +656,31 @@ export default function Profile() {
                         <button 
                           onClick={async () => {
                             if (window.confirm("Are you sure you want to delete this achievement?")) {
-                              await fetch(`http://localhost:5000/achievements/delete/${achievement.Achievmentsid}`, { method: "DELETE" });
-                              setAchievements(achievements.filter((a) => a.Achievmentsid !== achievement.Achievmentsid));
+                              await fetch(`http://localhost:5000/achievements/delete/${achievement.AchievementsID}`, {
+                                method: "DELETE",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                              })
+                              .then(response => {
+                                if (!response.ok) {
+                                  throw new Error(`Server error: ${response.status}`);
+                                }
+                                return response.json();
+                              })
+                              .then(data => {
+                                if (data.success) {
+                                  setAchievements(achievements.filter(a => a.AchievementsID !== achievement.AchievementsID));
+                                } else {
+                                  alert("Failed to delete achievement: " + data.message);
+                                }
+                              })
+                              .catch(error => {
+                                console.error("❌ Error deleting achievement:", error);
+                                alert("An error occurred while deleting. Check console.");
+                              });
+                              
+                              setAchievements(achievements.filter((a) => a.AchievementsID !== achievement.Achievements));
                             }
                           }}
                           className="text-red-500 hover:text-red-600 px-3"
