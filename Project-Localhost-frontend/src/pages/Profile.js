@@ -88,7 +88,7 @@ export default function Profile() {
     try {
       console.log("🟢 Submitting profile update:", editData); // ✅ Log the data before sending
   
-      const response = await fetch("http://localhost:5001/profile/update", {
+      const response = await fetch("http://localhost:5000/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,7 +141,7 @@ export default function Profile() {
     console.log("🟢 Submitting project:", projectPayload); // ✅ Debugging log
   
     try {
-      const response = await fetch(`http://localhost:5001/projects/${endpoint}`, {
+      const response = await fetch(`http://localhost:5000/projects/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(projectPayload),
@@ -293,7 +293,7 @@ export default function Profile() {
       // Fetch user projects
       const fetchProjects = async () => {
         try {
-          const response = await fetch(`http://localhost:5001/projects/user/${userLoginId}`);
+          const response = await fetch(`http://localhost:5000/projects/user/${userLoginId}`);
           const data = await response.json();
     
           console.log("🟢 Projects received in frontend:", data); // ✅ Debugging log
@@ -312,7 +312,7 @@ export default function Profile() {
 
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch(`http://localhost:5001/profile/${userLoginId}`);
+        const response = await fetch(`http://localhost:5000/profile/${userLoginId}`);
         const data = await response.json();
   
         if (data.success) {
@@ -323,6 +323,7 @@ export default function Profile() {
             gender: data.user.gender || "Not specified",
             secondaryEmail: data.user.secondaryEmail || "Not added",
             team: data.user.team || "Not assigned",
+            profilePicture: data.user.profilePicture || "", // ✅ Add this!
           });
         }
       } catch (error) {
@@ -336,7 +337,7 @@ export default function Profile() {
     // Fetch user writeups
     const fetchWriteups = async () => {
         try {
-            const response = await fetch(`http://localhost:5001/writeup/user/${userLoginId}`);
+            const response = await fetch(`http://localhost:5000/writeup/user/${userLoginId}`);
             const data = await response.json();
 
             if (data.success) {

@@ -1,10 +1,11 @@
-import {
-  ArrowRight, Bell, Home,
-  LogOut,
-  MessageCircle, Search, Upload, User
+import { 
+  ArrowRight, Bell, Home, MessageCircle, Search, Upload, User, LogOut, ImagePlus, Flag, UserSearch 
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaPlus } from "react-icons/fa"; // Import FaPlus from react-icons
+
+const API_URL = "http://localhost:5000"; // Backend URL
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -53,14 +54,21 @@ const NavBar = () => {
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
         </div>
+        
         <div className="flex items-center space-x-6">
+          {/* ✅ Exact spacing and sizes retained */}
           <button className="p-2 hover:bg-gray-100 rounded-full">
             <Home className="h-6 w-6 text-gray-600" />
           </button>
           <button className="p-2 hover:bg-gray-100 rounded-full">
             <Bell className="h-6 w-6 text-gray-600" />
           </button>
-          {/* ✅ Display Profile Picture in NavBar */}
+          <button onClick={() => navigate("/SuggestedUsers")} className="p-2 hover:bg-gray-100 rounded-full">
+            <UserSearch className="h-6 w-6 text-gray-600" />
+          </button>
+          <button onClick={() => navigate("/CTFEvents")} className="p-2 hover:bg-gray-100 rounded-full">
+            <Flag className="h-5 w-5" />
+          </button>
           <Link to="/profile" className="p-2 hover:bg-gray-100 rounded-full">
             <img
               src={profilePicture}
@@ -74,7 +82,7 @@ const NavBar = () => {
         </div>
       </div>
     </nav>
-  );
+  );  
 };
 
 const ProfileCard = () => {
@@ -163,7 +171,7 @@ const WriteupZonePreview = () => {
   const [viewMode, setViewMode] = useState("Trending");
 
   useEffect(() => {
-    fetch("http://localhost:5001/writeups")
+    fetch("http://localhost:5000/writeups")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -225,7 +233,28 @@ const WriteupZonePreview = () => {
 };
 
 export default function HomePage() {
-  const [user, setUser] = useState({ profilePicture: "/api/placeholder/40/40" })
+  const [user, setUser] = useState({ profilePicture: "/api/placeholder/40/40" });
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState("");  // ✅ Fix: Declare newPost
+  const [image, setImage] = useState(null);    // ✅ Fix: Declare image
+  const userProfileid = localStorage.getItem("userProfileid"); // ✅ Fix: Get userProfileid from localStorage
+  const navigate = useNavigate();
+
+
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/posts`);
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -246,6 +275,106 @@ export default function HomePage() {
 
     fetchUserProfile();
   }, []);
+
+  const handlePostSubmit = async () => {
+    console.log("🔵 handlePostSubmit triggered");
+
+    const userLoginId = localStorage.getItem("userLoginId");
+
+    if (!newPost.trim()) {
+        console.log("⚠️ No post content entered.");
+        alert("Please enter some text before posting.");
+        return;
+    }
+
+    console.log("🔵 userLoginId:", userLoginId);
+    console.log("🔵 newPost:", newPost);
+    console.log("🔵 image:", image);
+
+    if (!userLoginId) {
+        console.error("❌ userLoginId not found! Post request cannot proceed.");
+        alert("Error: User not found. Please log in again.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("userLoginId", userLoginId);
+    formData.append("content", newPost);
+
+    // ✅ Only append image if it's not null
+    if (image) {
+        formData.append("image", image);
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/posts`, {
+            method: "POST",
+            body: formData,
+        });
+
+        console.log("🔵 Fetch request sent...");
+
+        const responseData = await response.json(); // Get response data for debugging
+
+        if (response.ok) {
+            console.log("🟢 Post uploaded successfully!", responseData);
+            setNewPost("");
+            setImage(null);
+            fetchPosts();
+        } else {
+            console.log("❌ Post upload failed:", responseData);
+            alert(`Post failed: ${responseData.message || "Unknown error"}`);
+        }
+    } catch (error) {
+        console.error("❌ Error posting:", error);
+        alert("Something went wrong. Please try again.");
+    }
+};
+
+const [organizations, setOrganizations] = useState([]);
+
+useEffect(() => {
+  setOrganizations([
+    { id: 1, name: "GT GreyHat Club" },
+    { id: 2, name: "Millennium Project" },
+    { id: 3, name: "Ethical Hacking" },
+  ]);
+}, []);
+
+const handleOrgClick = (orgId) => {
+  navigate('/OrganizationPage');
+};
+
+const [showModal, setShowModal] = useState(false);
+const [joinCode, setJoinCode] = useState("");
+
+const handleJoinOrganization = async () => {
+  if (!joinCode) return alert("Please enter a join code.");
+
+  try {
+    const response = await fetch("http://localhost:5000/join-organization", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ joinCode }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Successfully joined the organization!");
+      setShowModal(false);
+      setJoinCode("");
+    } else {
+      alert("Invalid join code. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error joining organization:", error);
+    alert("Something went wrong. Please try again.");
+  }
+};
+
+
+
   return (
     <>
       <NavBar />
@@ -253,51 +382,96 @@ export default function HomePage() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-3">
-              <div className="sticky top-24">
-                <ProfileCard />
+            <div className="sticky top-24">
+            <ProfileCard />
+
+            {/* ✅ Your Organizations List - Inserted Below ProfileCard */}
+            <div className="bg-white shadow-md p-4 rounded-lg mt-6">
+              <h2 className="text-lg font-semibold mb-3">Your Organizations</h2>
+              <div className="space-y-4">
+                {organizations.map((org) => (
+                  <div
+                    key={org.id}
+                    onClick={() => handleOrgClick(org.id)}
+                    className="cursor-pointer p-4 bg-blue-50 hover:bg-blue-100 transition rounded-lg shadow-md"
+                  >
+                    <h3 className="text-blue-700 font-semibold">{org.name}</h3>
+                  </div>
+                ))}
               </div>
+            </div>
+          </div>
+
             </div>
             <div className="col-span-6">
               {/* Main Content */}
             <div className="col-span-6">
               {/* Create Post Section */}
-              <div className="bg-white/90 backdrop-blur-xl shadow-xl rounded-xl p-6 mb-6">
-                <div className="flex items-center">
-                  <img
-                    src={user.profilePicture}
-                    alt="User Avatar"
-                    className="w-10 h-10 rounded-full object-cover mr-4"
-                  />
+              <div className="flex items-center">
+                <img
+                  src={user.profilePicture}
+                  alt="User Avatar"
+                  className="w-10 h-10 rounded-full object-cover mr-4"
+                />
 
+                <input
+                  type="text"
+                  value={newPost}
+                  onChange={(e) => setNewPost(e.target.value)}
+                  placeholder="What's on your mind?"
+                  className="flex-1 py-2 px-4 border rounded-full focus:ring-2 focus:ring-blue-500"
+                />
+
+                {/* ✅ Image Upload Button */}
+                <label className="cursor-pointer p-2">
                   <input
-                    type="text"
-                    placeholder="What's on your mind?"
-                    className="flex-1 py-2 px-4 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImage(e.target.files[0])}
+                    className="hidden"
                   />
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full transition-colors">
-                    <Upload className="h-5 w-5" />
-                  </button>
-                </div>
+                  <ImagePlus className="h-6 w-6 text-gray-500 hover:text-gray-700" />
+                </label>
+
+                {/* ✅ Submit Button */}
+                <button type="button" onClick={handlePostSubmit} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full">
+                  <Upload className="h-5 w-5" />
+                </button>
               </div>
+
+              {/* ✅ Show selected image preview */}
+              {image && <p className="text-sm text-gray-600 mt-2">Selected image: {image.name}</p>}
+
 
               {/* Feed Posts */}
               <div>
-                <FeedPost
-                  name="John Doe"
-                  title="Cybersecurity Analyst"
-                  content="Just finished an engaging discussion on the latest advancements in threat detection. Excited to put these insights into practice!"
-                />
-                <FeedPost
-                  name="Jane Smith"
-                  title="Security Engineer"
-                  content="Shared a new blog post on best practices for implementing a Zero Trust architecture. Let me know what you think!"
-                />
-                <FeedPost
-                  name="Michael Johnson"
-                  title="Penetration Tester"
-                  content="Attended a virtual conference on ethical hacking techniques. Learned some valuable new skills to add to my toolkit."
-                />
+                {posts.length > 0 ? (
+                  posts.map((post) => (
+                    <div key={post.post_id} className="bg-white/90 backdrop-blur-xl shadow-xl rounded-xl p-6 mb-6">
+                      <div className="flex items-center mb-4">
+                        <img
+                          src={post.ProfilePicture || "/api/placeholder/40/40"}
+                          alt="User Avatar"
+                          className="w-10 h-10 rounded-full mr-4"
+                        />
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-800">{post.firstname} {post.lastname}</h3>
+                          <p className="text-gray-500">{new Date(post.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <p className="text-gray-600">{post.content}</p>
+
+                      {/* ✅ Show the post image if available */}
+                      {post.image_url && (
+                        <img src={post.image_url} alt="Post" className="mt-4 rounded-lg max-w-full" />
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center">No posts yet. Be the first to post something!</p>
+                )}
               </div>
+
             </div>
             </div>
             <div className="col-span-3">
@@ -308,10 +482,59 @@ export default function HomePage() {
                 <NewsCard title="Updates to Security Compliance Standards" source="Security Weekly" time="6 hours ago" />
                 <WriteupZonePreview />
               </div>
+              {/* Floating Add Button */}
+            <button
+              onClick={() => setShowModal(true)} // ✅ Opens modal when clicked
+              className="fixed bottom-6 right-6 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition"
+            >
+              <FaPlus size={24} />
+            </button>
+
             </div>
           </div>
         </div>
       </div>
+          {/* ✅ Modal for Actions */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-96">
+              <h2 className="text-xl font-semibold mb-4">Choose an Action</h2>
+              
+              {/* ✅ Clicking this navigates to /Writeup */}
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  navigate('/Writeup'); // ✅ Redirects after closing modal
+                }}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg mb-4 transition"
+              >
+                Post a Writeup
+              </button>
+
+              <input
+                type="text"
+                placeholder="Enter Join Code"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                className="w-full p-2 border rounded-lg mb-2"
+              />
+
+              <button
+                onClick={handleJoinOrganization}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg mb-4 transition"
+              >
+                Join Organization
+              </button>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full bg-gray-300 hover:bg-gray-400 py-2 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
     </>
   );
 }

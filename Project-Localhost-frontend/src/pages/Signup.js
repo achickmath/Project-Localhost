@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function Signup() {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function Signup() {
         };
     
         try {
-            const response = await fetch('http://localhost:5001/signup', {
+            const response = await fetch('http://localhost:5000/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formattedData),
@@ -152,6 +153,12 @@ export default function Signup() {
                     <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
                         Sign Up
                     </button>
+                    <p className="mt-6 text-sm text-gray-500">
+                        Already Have an Account?{' '}
+                        <Link to="/Login" className="text-blue-500 hover:underline">
+                        Click Here
+                        </Link>
+                    </p>
                 </form>
             </div>
         </div>

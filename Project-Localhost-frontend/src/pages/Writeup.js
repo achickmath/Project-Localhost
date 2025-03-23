@@ -14,7 +14,7 @@ export default function Writeup() {
       console.log("🟢 Submitting writeup:", { title, category, content, userLoginId });
   
       try {
-          const response = await fetch("http://localhost:5001/writeup/add", {
+          const response = await fetch("http://localhost:5000/writeup/add", {
               method: "POST",
               headers: {
                   "Content-Type": "application/json",

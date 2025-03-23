@@ -11,7 +11,7 @@ export default function FullWriteup() {
   useEffect(() => {
     const fetchWriteup = async () => {
       try {
-        const response = await fetch(`http://localhost:5001/writeup/${id}`);
+        const response = await fetch(`http://localhost:5000/writeup/${id}`);
         const data = await response.json();
 
         console.log("🟢 Writeup Received:", data);
@@ -33,7 +33,7 @@ export default function FullWriteup() {
 
   const handleVote = async (type) => {
     try {
-      const response = await fetch("http://localhost:5001/writeup/vote", {
+      const response = await fetch("http://localhost:5000/writeup/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ writeupId: id, userId, type }),
