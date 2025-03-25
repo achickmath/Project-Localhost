@@ -71,10 +71,39 @@ export default function CTFTeamsPage() {
             alert("Something went wrong.");
           }
     } else if (stage === 'searchTeam') {
-      // Find team members based on criteria
-      const matches = findTeamMembers();
-      setSelectedTeammates(matches);
-      setStage('teamResults');
+        try {
+            const userId = parseInt(localStorage.getItem("userLoginId"));
+        
+            const response = await fetch("http://localhost:5000/ctfpool/match", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userId,
+                name: userData.name,
+                email: userData.email,
+                specialty: userData.specialty,
+                lookingFor: userData.lookingFor,
+                teamSize: userData.teamSize,
+              }),
+            });
+        
+            const data = await response.json();
+        
+            if (data.success) {
+              if (data.teammates.length === 0) {
+                alert("No matches found yet. Hang tight — we'll notify you once matches are available.");
+              }
+              setSelectedTeammates(data.teammates);
+              setStage("teamResults");
+            } else {
+              alert(data.message || "Unable to find matches.");
+            }
+          } catch (err) {
+            console.error("Error fetching teammates:", err);
+            alert("Something went wrong while finding teammates.");
+          }
     }
   };
   
