@@ -39,14 +39,37 @@ export default function CTFTeamsPage() {
   const [selectedTeammates, setSelectedTeammates] = useState([]);
   
   // Handler for form submissions
-  const handleSubmit = (e) => {
+  const handleSubmit =async (e) => {
+    const userId = localStorage.getItem("userLoginId"); // assumes you store it on login
     e.preventDefault();
     if (stage === 'enterPool') {
-      // This would send data to backend to add to pool
-      console.log('Adding to pool:', userData);
-      // Move to team search after adding to pool
-      setCameFromPool(true);
-      setStage('searchTeam');
+        try {
+            const response = await fetch("http://localhost:5000/ctfpool", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userId: parseInt(userId),
+                name: userData.name,
+                email: userData.email,
+                specialty: userData.specialty
+              }),
+            });
+        
+            const data = await response.json();
+        
+            if (data.success) {
+              console.log("Added to pool:", data.message);
+              setCameFromPool(true);
+              setStage("searchTeam");
+            } else {
+              alert(data.message);
+            }
+          } catch (error) {
+            console.error("Error adding to pool:", error);
+            alert("Something went wrong.");
+          }
     } else if (stage === 'searchTeam') {
       // Find team members based on criteria
       const matches = findTeamMembers();

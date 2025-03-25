@@ -9,6 +9,7 @@ const profileRoutes = require("./routes/ProfileServer");
 const writeupRoutes = require("./routes/writeupServer"); // ✅ Import the writeup routes
 const postRoutes = require("./routes/postRoutes"); // Import post routes
 const organizationRoutes = require("./routes/OrganizationRoutes"); // ✅ Import organization routes
+const ctfPoolRoutes = require("./routes/ctfpoolServer");
 
 const app = express();
 app.use(bodyParser.json());
@@ -25,6 +26,11 @@ app.use(profileRoutes);
 app.use("/writeup", writeupRoutes); // ✅ Register the route
 app.use(postRoutes);
 app.use("/organization", organizationRoutes); // ✅ Register organization routes
+app.use(ctfPoolRoutes);
+app.use((req, res) => {
+    res.status(404).json({ error: "No matching route", path: req.path });
+  });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
