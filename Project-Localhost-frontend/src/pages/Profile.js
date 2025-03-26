@@ -359,7 +359,8 @@ export default function Profile() {
             github: data.user.github || "",
             instagram: data.user.instagram || "",
             hackerone: data.user.hackerone || "",
-            bugcrowd: data.user.bugcrowd || ""
+            bugcrowd: data.user.bugcrowd || "",
+            userLoginId: userLoginId,
           });          
         }
       } catch (error) {
