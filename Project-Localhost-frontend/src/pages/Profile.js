@@ -49,10 +49,35 @@ const NavBar = () => {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [user, setUser] = useState({ firstName: "", lastName: "" });
+  const [user, setUser] = useState({
+    firstName: "",
+    lastName: "",
+    bio: "",
+    gender: "",
+    secondaryEmail: "",
+    team: "",
+    profilePicture: "",
+    linkedin: "",
+    github: "",
+    instagram: "",
+    hackerone: "",
+    bugcrowd: ""
+  });
+  
   const [writeups, setWriteups] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ bio: "", gender: "", secondaryEmail: "", team: "Red" });
+  const [editData, setEditData] = useState({
+    bio: "",
+    gender: "",
+    secondaryEmail: "",
+    team: "Red",
+    linkedin: "",
+    github: "",
+    instagram: "",
+    hackerone: "",
+    bugcrowd: ""
+  });
+  
   const [projects, setProjects] = useState([]);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [editProject, setEditProject] = useState(null);
@@ -97,8 +122,13 @@ export default function Profile() {
           gender: editData.gender,
           secondaryEmail: editData.secondaryEmail,
           team: editData.team,
-          profilePicture: editData.profilePicture, // ✅ Include profile picture
-        }),
+          profilePicture: editData.profilePicture,
+          linkedin: editData.linkedin,
+          github: editData.github,
+          instagram: editData.instagram,
+          hackerone: editData.hackerone,
+          bugcrowd: editData.bugcrowd,
+        }),        
       });
   
       const data = await response.json();
@@ -191,14 +221,15 @@ export default function Profile() {
   
       if (data.success) {
         alert(editAchievement ? "Achievement updated!" : "Achievement added!");
-  
-        // Refresh achievements
+      
         const updatedAchievements = editAchievement
           ? achievements.map((a) =>
-              a.AchievementsID === editAchievement.AchievementsID ? { ...a, ...achievementData } : a
+              a.AchievementsID === editAchievement.AchievementsID
+                ? { ...a, ...achievementData }
+                : a
             )
           : [...achievements, { ...achievementData, AchievementsID: data.achievementId }];
-  
+      
         setAchievements(updatedAchievements);
         setIsAddingAchievement(false);
         setEditAchievement(null);
@@ -285,10 +316,10 @@ export default function Profile() {
         return;
     }
 
-    setUser({
+/*     setUser({
         firstName: storedFirstName || "User",
         lastName: storedLastName || "",
-    });
+    }); */
 
       // Fetch user projects
       const fetchProjects = async () => {
@@ -323,8 +354,13 @@ export default function Profile() {
             gender: data.user.gender || "Not specified",
             secondaryEmail: data.user.secondaryEmail || "Not added",
             team: data.user.team || "Not assigned",
-            profilePicture: data.user.profilePicture || "", // ✅ Add this!
-          });
+            profilePicture: data.user.profilePicture || "",
+            linkedin: data.user.linkedin || "",
+            github: data.user.github || "",
+            instagram: data.user.instagram || "",
+            hackerone: data.user.hackerone || "",
+            bugcrowd: data.user.bugcrowd || ""
+          });          
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -421,107 +457,168 @@ export default function Profile() {
                     gender: user.gender || "",
                     secondaryEmail: user.secondaryEmail || "",
                     team: user.team || "Red",
-                  });
+                    linkedin: user.linkedin || "",
+                    github: user.github || "",
+                    instagram: user.instagram || "",
+                    hackerone: user.hackerone || "",
+                    bugcrowd: user.bugcrowd || ""
+                  });                  
                   setIsEditing(true);
                 }}
               >
                 <Edit className="h-5 w-5 mr-2" /> Edit Profile
               </button>
 
-              {isEditing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
-
-            {/* Profile Picture Upload */}
-            <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full border rounded-lg p-2 mb-3"
-              onChange={(e) => handleImageUpload(e)}
-            />
-
-            {/* Display the selected image preview */}
-            {editData.profilePicture && (
-              <img
-                src={editData.profilePicture}
-                alt="Profile Preview"
-                className="w-24 h-24 rounded-full object-cover mt-2"
-              />
-            )}
-            {/* Bio */}
-            <label className="block text-sm font-medium text-gray-700">Bio</label>
-            <textarea 
-              className="w-full border rounded-lg p-2 mb-3"
-              value={editData.bio}
-              onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
-            />
-
-            {/* Gender */}
-            <label className="block text-sm font-medium text-gray-700">Gender</label>
-            <select 
-              className="w-full border rounded-lg p-2 mb-3"
-              value={editData.gender}
-              onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-
-            {/* Secondary Email */}
-            <label className="block text-sm font-medium text-gray-700">Secondary Email</label>
-            <input 
-              type="email" 
-              className="w-full border rounded-lg p-2 mb-3"
-              value={editData.secondaryEmail}
-              onChange={(e) => setEditData({ ...editData, secondaryEmail: e.target.value })}
-            />
-
-            {/* Team */}
-            <label className="block text-sm font-medium text-gray-700">Team</label>
-            <select 
-              className="w-full border rounded-lg p-2 mb-3"
-              value={editData.team}
-              onChange={(e) => setEditData({ ...editData, team: e.target.value })}
-            >
-              <option value="Red">Red</option>
-              <option value="Blue">Blue</option>
-              <option value="Purple">Purple</option>
-            </select>
-
-            {/* Save & Cancel Buttons */}
-            <div className="flex justify-between">
-              <button className="bg-green-500 text-white px-4 py-2 rounded-lg" onClick={handleEditProfile}>Save</button>
-              <button className="bg-gray-400 text-white px-4 py-2 rounded-lg" onClick={() => setIsEditing(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}    
-
-              <div className="mt-6 space-x-4">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-                  <MessageCircle className="h-5 w-5 inline-block mr-2" /> Message
-                </button>
-                <button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors">
-                  <Shield className="h-5 w-5 inline-block mr-2" /> Follow
-                </button>
-              </div>
+              {localStorage.getItem("userLoginId") !== user.userLoginId && (
+                <div className="mt-6 space-x-4">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    <MessageCircle className="h-5 w-5 inline-block mr-2" /> Message
+                  </button>
+                  <button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    <Shield className="h-5 w-5 inline-block mr-2" /> Follow
+                  </button>
+                </div>
+              )}
 
               <div className="mt-6 flex space-x-4">
-                <a href="#" className="text-gray-600 hover:text-blue-600">
-                  <Linkedin className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-gray-600 hover:text-pink-600">
-                  <Instagram className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">
-                  <Github className="h-6 w-6" />
-                </a>
-              </div>
+                {user.linkedin && (
+                  <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600">
+                    <Linkedin className="h-6 w-6" />
+                  </a>
+                )}
+                {user.github && (
+                  <a href={user.github} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">
+                    <Github className="h-6 w-6" />
+                  </a>
+                )}
+                {user.instagram && (
+                  <a href={user.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-pink-600">
+                    <Instagram className="h-6 w-6" />
+                  </a>
+                )}
+                {user.hackerone && (
+                  <a href={user.hackerone} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-purple-600">
+                    <Shield className="h-6 w-6" />
+                  </a>
+                )}
+                {user.bugcrowd && (
+                  <a href={user.bugcrowd} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-green-600">
+                    <Shield className="h-6 w-6" />
+                  </a>
+                )}
+              </div>  
             </div>
           </div>
+          {isEditing && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center transition-opacity duration-300 ease-in-out"
+              onKeyDown={(e) => e.key === 'Escape' && setIsEditing(false)}
+              tabIndex={0} // allow ESC key handling
+            >
+              <div className="bg-white max-h-[90vh] overflow-y-auto p-6 rounded-xl shadow-2xl w-full max-w-lg mx-4 animate-fade-in">
+                <h2 className="text-2xl font-bold mb-4 text-center">Edit Profile</h2>
+
+                {/* Profile Picture Upload */}
+                <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full border rounded-lg p-2 mb-3"
+                  onChange={handleImageUpload}
+                />
+                {editData.profilePicture && (
+                  <img
+                    src={editData.profilePicture}
+                    alt="Profile Preview"
+                    className="w-24 h-24 rounded-full object-cover mt-2 mx-auto"
+                  />
+                )}
+
+                {/* Bio */}
+                <label className="block text-sm font-medium text-gray-700 mt-4">Bio</label>
+                <textarea
+                  autoFocus
+                  className="w-full border rounded-lg p-2 mb-3"
+                  value={editData.bio}
+                  onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
+                />
+
+                {/* Gender */}
+                <label className="block text-sm font-medium text-gray-700">Gender</label>
+                <select
+                  className="w-full border rounded-lg p-2 mb-3"
+                  value={editData.gender}
+                  onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+
+                {/* Secondary Email */}
+                <label className="block text-sm font-medium text-gray-700">Secondary Email</label>
+                <input
+                  type="email"
+                  className="w-full border rounded-lg p-2 mb-1"
+                  value={editData.secondaryEmail}
+                  onChange={(e) => setEditData({ ...editData, secondaryEmail: e.target.value })}
+                />
+                {!editData.secondaryEmail.includes("@") && editData.secondaryEmail !== "" && (
+                  <p className="text-sm text-red-500 mb-2">Enter a valid email address</p>
+                )}
+
+                {/* Team */}
+                <label className="block text-sm font-medium text-gray-700">Team</label>
+                <select
+                  className="w-full border rounded-lg p-2 mb-3"
+                  value={editData.team}
+                  onChange={(e) => setEditData({ ...editData, team: e.target.value })}
+                >
+                  <option value="Red">Red</option>
+                  <option value="Blue">Blue</option>
+                  <option value="Purple">Purple</option>
+                </select>
+
+                {/* Social Links */}
+                {[
+                  { label: "LinkedIn", key: "linkedin" },
+                  { label: "GitHub", key: "github" },
+                  { label: "Instagram", key: "instagram" },
+                  { label: "HackerOne", key: "hackerone" },
+                  { label: "Bugcrowd", key: "bugcrowd" },
+                ].map(({ label, key }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700">{label}</label>
+                    <input
+                      type="url"
+                      className="w-full border rounded-lg p-2 mb-3"
+                      value={editData[key]}
+                      onChange={(e) => setEditData({ ...editData, [key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+
+                {/* Buttons */}
+                <div className="flex justify-between mt-4">
+                  <button
+                    className={`px-4 py-2 rounded-lg ${
+                      editData.bio ? "bg-green-500 text-white" : "bg-gray-300 text-white cursor-not-allowed"
+                    }`}
+                    onClick={editData.bio ? handleEditProfile : null}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="bg-gray-400 text-white px-4 py-2 rounded-lg"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {/* Organization Card - New Section */}
           <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-xl p-8">
@@ -681,7 +778,7 @@ export default function Profile() {
                                 alert("An error occurred while deleting. Check console.");
                               });
                               
-                              setAchievements(achievements.filter((a) => a.AchievementsID !== achievement.Achievements));
+                              //setAchievements(achievements.filter((a) => a.AchievementsID !== achievement.Achievements));
                             }
                           }}
                           className="text-red-500 hover:text-red-600 px-3"
@@ -724,9 +821,22 @@ export default function Profile() {
                       />
 
                       <div className="flex justify-between">
-                        <button className="bg-green-500 text-white px-4 py-2 rounded-lg" onClick={handleSaveAchievement}>
-                          {editAchievement ? "Update" : "Save"}
-                        </button>
+                      {!achievementData.achievementDate && (
+                        <p className="text-red-500 text-sm mb-2">Please select a date.</p>
+                      )}
+                      <button
+                        className={`px-4 py-2 rounded-lg ${
+                          achievementData.achievementDate
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-300 text-white cursor-not-allowed"
+                        }`}
+                        onClick={() => {
+                          if (!achievementData.achievementDate) return;
+                          handleSaveAchievement();
+                        }}
+                      >
+                        {editAchievement ? "Update" : "Save"}
+                      </button>
                         <button className="bg-gray-400 text-white px-4 py-2 rounded-lg" onClick={() => setIsAddingAchievement(false)}>
                           Cancel
                         </button>
@@ -888,6 +998,7 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
+              
             )}
           </div>
         </div>

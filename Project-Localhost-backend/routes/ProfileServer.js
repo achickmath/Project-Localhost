@@ -8,7 +8,7 @@ router.get("/profile/:id", async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      "SELECT firstName, lastName, PrimaryEmail AS email, Bio, Gender, SecondaryEmail, Team, ProfilePicture FROM UserProfile WHERE UserLoginid = ?",
+      "SELECT firstName, lastName, PrimaryEmail AS email, Bio, Gender, SecondaryEmail, Team, ProfilePicture, Linkedin, Github, Instagram, Hackerone, Bugcrowd FROM UserProfile WHERE UserLoginid = ?",
       [userId]
     );
 
@@ -31,6 +31,11 @@ router.get("/profile/:id", async (req, res) => {
           gender: user.Gender || "Not specified",
           secondaryEmail: user.SecondaryEmail || "Not added",
           team: user.Team || "Red",
+          linkedin: user.Linkedin || "",
+          github: user.Github || "",
+          instagram: user.Instagram || "",
+          hackerone: user.Hackerone || "",
+          bugcrowd: user.Bugcrowd || "",
           profilePicture: profilePictureBase64, // ✅ Now returning profile picture
         },
       });
@@ -46,7 +51,7 @@ router.get("/profile/:id", async (req, res) => {
 
 //Update user bio
 router.post("/profile/update", async (req, res) => {
-  const { userId, bio, gender, secondaryEmail, team, profilePicture } = req.body;
+  const { userId, bio, gender, secondaryEmail, team, profilePicture, linkedin, github, instagram, hackerone, bugcrowd } = req.body;
 
   if (!userId) {
     return res.status(400).json({ success: false, message: "User ID is required" });
@@ -57,12 +62,23 @@ router.post("/profile/update", async (req, res) => {
     let values = [bio, gender, secondaryEmail, team, userId];
 
     // ✅ Only update ProfilePicture if it's not empty
-    if (profilePicture !== undefined && profilePicture !== null && profilePicture.trim() !== "") {
-      const imageBuffer = Buffer.from(profilePicture.split(",")[1], "base64");
-
-      query = `UPDATE userprofile SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ?, ProfilePicture = ? WHERE UserLoginid = ?`;
-      values = [bio, gender, secondaryEmail, team, imageBuffer, userId];
+    let imageBuffer = null;
+    if (profilePicture && profilePicture.startsWith("data:image")) {
+      imageBuffer = Buffer.from(profilePicture.split(",")[1], "base64");
     }
+    
+    if (imageBuffer) {
+      query = `UPDATE userprofile 
+        SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ?, ProfilePicture = ?, Linkedin = ?, Github = ?, Instagram = ?, Hackerone = ?, Bugcrowd = ? 
+        WHERE UserLoginid = ?`;
+      values = [bio, gender, secondaryEmail, team, imageBuffer, linkedin, github, instagram, hackerone, bugcrowd, userId];
+    } else {
+      query = `UPDATE userprofile 
+        SET Bio = ?, Gender = ?, SecondaryEmail = ?, team = ?, Linkedin = ?, Github = ?, Instagram = ?, Hackerone = ?, Bugcrowd = ? 
+        WHERE UserLoginid = ?`;
+      values = [bio, gender, secondaryEmail, team, linkedin, github, instagram, hackerone, bugcrowd, userId];
+    }
+    
 
     await db.query(query, values);
     res.json({ success: true, message: "Profile updated successfully" });
