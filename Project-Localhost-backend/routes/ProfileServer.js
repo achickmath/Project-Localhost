@@ -48,6 +48,39 @@ router.get("/profile/:id", async (req, res) => {
   }
 });
 
+// ✅ Search Users by Name (firstName or lastName)
+router.get("/profiles/search", async (req, res) => {
+  const search = req.query.name;
+  if (!search) {
+    return res.status(400).json({ success: false, message: "Name is required." });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT UserLoginid, FirstName, LastName, ProfilePicture 
+       FROM userprofile 
+       WHERE FirstName LIKE ? OR LastName LIKE ? 
+       LIMIT 10`, 
+      [`%${search}%`, `%${search}%`]
+    );
+
+    // Convert BLOBs to base64
+    const users = rows.map(user => ({
+      userLoginId: user.UserLoginid,
+      firstName: user.FirstName,
+      lastName: user.LastName,
+      profilePicture: user.ProfilePicture 
+        ? `data:image/png;base64,${user.ProfilePicture.toString("base64")}` 
+        : null
+    }));
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error("❌ Error searching users:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 
 //Update user bio
 router.post("/profile/update", async (req, res) => {

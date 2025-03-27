@@ -13,6 +13,7 @@ import Leaderboard from './pages/Leaderboard';
 import SuggestedUsers from './pages/SuggestedUsers';
 import CreateOrg from './pages/CreateOrg';
 import CTFTeamsPage from './pages/CTFTeamsPage';
+import SearchResults from "./pages/SearchResults";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem("authToken");
@@ -46,7 +47,9 @@ function App() {
         <Route path="/OrganizationPage" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} />
         <Route path="/CTFTeams" element={<ProtectedRoute><CTFTeamsPage/></ProtectedRoute>} />
         <Route path="/teams" element={<ProtectedRoute><CTFTeamsPage/></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/search-results" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

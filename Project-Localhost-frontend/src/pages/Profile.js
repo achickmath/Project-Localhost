@@ -1,7 +1,7 @@
 import { Edit, ExternalLink, FileText, Github, Instagram, Linkedin, LogOut, MessageCircle, Shield } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams  } from 'react-router-dom';
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -49,6 +49,9 @@ const NavBar = () => {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { userId: routeUserId } = useParams();
+  const userLoginId = routeUserId || localStorage.getItem("userLoginId");
+  const isOwnProfile = !routeUserId || routeUserId === localStorage.getItem("userLoginId");
   const [user, setUser] = useState({
     firstName: "",
     lastName: "",
@@ -117,7 +120,7 @@ export default function Profile() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: localStorage.getItem("userLoginId"),
+          userId: userLoginId,
           bio: editData.bio,
           gender: editData.gender,
           secondaryEmail: editData.secondaryEmail,
@@ -156,9 +159,7 @@ export default function Profile() {
   
   
   
-  const handleSaveProject = async () => {
-    const userLoginId = localStorage.getItem("userLoginId");
-  
+  const handleSaveProject = async () => {  
     const endpoint = editProject ? "edit" : "add";
     const projectPayload = {
       userLoginId,
@@ -196,8 +197,6 @@ export default function Profile() {
   };
 
   const handleSaveAchievement = async () => {
-    const userLoginId = localStorage.getItem("userLoginId");
-  
     const endpoint = editAchievement ? "edit" : "add";
     const achievementPayload = {
       userLoginId,
@@ -254,7 +253,7 @@ export default function Profile() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userLoginId: localStorage.getItem("userLoginId"),
+          userLoginId: userLoginId,
           email: organizationData.email,
           joinCode: organizationData.joinCode,
         }),
@@ -285,7 +284,7 @@ export default function Profile() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userLoginId: localStorage.getItem("userLoginId"),
+          userLoginId: userLoginId,
         }),
       });
   
@@ -309,7 +308,6 @@ export default function Profile() {
     const token = localStorage.getItem("authToken");
     const storedFirstName = localStorage.getItem("firstName");
     const storedLastName = localStorage.getItem("lastName");
-    const userLoginId = localStorage.getItem("userLoginId");
 
     if (!token) {
         navigate("/login"); 
@@ -389,7 +387,6 @@ export default function Profile() {
 
     const fetchAchievements = async () => {
       try {
-        const userLoginId = localStorage.getItem("userLoginId");
         const response = await fetch(`http://localhost:5000/achievements/user/${userLoginId}`);
         const data = await response.json();
     
@@ -408,7 +405,7 @@ export default function Profile() {
     const fetchUserOrganization = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/organization/user/${localStorage.getItem("userLoginId")}`
+          `http://localhost:5000/organization/user/${userLoginId}`
         );
         const data = await response.json();
   
@@ -426,7 +423,7 @@ export default function Profile() {
   
     fetchUserOrganization();
 
-  }, [navigate]);
+  }, [navigate, userLoginId]);
 
   return (
     
@@ -450,6 +447,7 @@ export default function Profile() {
               <p className="text-gray-500 mt-2">Gender: {user.gender || "Not specified"}</p>
               <p className="text-gray-500">Team: <span className="font-semibold text-blue-600">{user.team}</span></p>
               <p className="text-gray-500">Secondary Email: {user.secondaryEmail || "Not added"}</p>
+              {isOwnProfile && (
               <button 
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-4 rounded-lg flex items-center"
                 onClick={() => {
@@ -469,8 +467,9 @@ export default function Profile() {
               >
                 <Edit className="h-5 w-5 mr-2" /> Edit Profile
               </button>
+            )}
 
-              {localStorage.getItem("userLoginId") !== user.userLoginId && (
+              {!isOwnProfile && (
                 <div className="mt-6 space-x-4">
                   <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
                     <MessageCircle className="h-5 w-5 inline-block mr-2" /> Message
@@ -653,18 +652,22 @@ export default function Profile() {
             ) : (
               // ✅ Show Placeholder if Not Part of Any Organization
               <div className="flex flex-col items-center text-gray-500">
-                <p className="text-sm">You are not part of any organization.</p>
+                <p className="text-sm">
+                  {isOwnProfile ? "You are not part of any organization." : "They are not part of any organization."}
+                </p>
+                {isOwnProfile && (
                 <button
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-4 rounded-lg"
                   onClick={() => setIsJoiningOrganization(true)}
                 >
                   Join Organization
                 </button>
+                )}
               </div>
             )}
 
             {/* ✅ Join Organization Modal */}
-            {isJoiningOrganization && (
+            {isOwnProfile && isJoiningOrganization && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
                 <div className="bg-white p-6 rounded-lg shadow-lg w-96">
                   <h2 className="text-xl font-bold mb-4">Join Organization</h2>
@@ -702,6 +705,7 @@ export default function Profile() {
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Certifications & Achievements</h3>
 
                 {/* ✅ Add Achievement Button */}
+                {isOwnProfile && (
                 <button 
                   onClick={() => { 
                     setIsAddingAchievement(true);
@@ -712,6 +716,7 @@ export default function Profile() {
                 >
                   <FaPlus className="h-5 w-5 mr-2" /> Add Achievement
                 </button>
+                )}
 
                 <div className="space-y-4 mt-4">
                   {achievements.map((achievement, index) => (
@@ -792,7 +797,7 @@ export default function Profile() {
                 </div>
 
                 {/* ✅ Achievement Modal */}
-                {isAddingAchievement && (
+                {isOwnProfile && isAddingAchievement && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
                     <div className="bg-white p-6 rounded-lg shadow-lg w-96">
                       <h2 className="text-xl font-bold mb-4">{editAchievement ? "Edit Achievement" : "Add Achievement"}</h2>
@@ -856,6 +861,7 @@ export default function Profile() {
                   <h3 className="text-2xl font-bold text-gray-800">Projects</h3>
 
                   {/* Add Project Button */}
+                  {isOwnProfile && (
                   <button 
                     onClick={() => { 
                       setIsAddingProject(true); 
@@ -866,6 +872,7 @@ export default function Profile() {
                   >
                     <FaPlus className="h-5 w-5 mr-2" /> Add Project
                   </button>
+                  )}
                 </div>  
                 <div className="space-y-6">
                   {projects.length > 0 ? (

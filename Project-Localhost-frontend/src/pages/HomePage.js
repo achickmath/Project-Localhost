@@ -10,6 +10,13 @@ const API_URL = "http://localhost:5000"; // Backend URL
 const NavBar = () => {
   const navigate = useNavigate();
   const [profilePicture, setProfilePicture] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+
+
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -29,6 +36,8 @@ const NavBar = () => {
     fetchUserProfile();
   }, []);
 
+  
+
   const handleLogout = () => {
     localStorage.clear();
     window.history.replaceState(null, "", "/login");
@@ -46,11 +55,60 @@ const NavBar = () => {
             Blue Jack
           </h1>
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-            />
+          <input
+          type="text"
+          value={searchTerm}
+          onChange={async (e) => {
+            const value = e.target.value;
+            setSearchTerm(value);
+
+            if (value.length > 1) {
+              try {
+                const res = await fetch(`http://localhost:5000/profiles/search?name=${value}`);
+                const data = await res.json();
+                if (data.success) {
+                  setSuggestions(data.users);
+                }
+              } catch (err) {
+                console.error("Error fetching suggestions:", err);
+              }
+            } else {
+              setSuggestions([]);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && searchTerm.trim()) {
+              navigate(`/search-results?name=${encodeURIComponent(searchTerm.trim())}`);
+              setSuggestions([]);
+            }
+          }}
+          placeholder="Search users..."
+          className="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+        />
+
+          {suggestions.length > 0 && (
+          <div className="absolute top-full left-0 w-full bg-white shadow-md rounded-b-xl z-50 max-h-60 overflow-y-auto">
+            {suggestions.map((user) => (
+              <div
+                key={user.UserLoginid}
+                className="flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100"
+                onClick={() => {
+                  navigate(`/profile/${user.userLoginId}`);
+                  setSuggestions([]);
+                  setSearchTerm("");
+                }}
+              >
+                <img
+                  src={user.profilePicture || "/api/placeholder/40/40"}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full mr-3 object-cover"
+                />
+                <span className="text-gray-700 font-medium">{user.firstName} {user.lastName}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
         </div>
